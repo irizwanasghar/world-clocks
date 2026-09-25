@@ -132,18 +132,27 @@ export function applyPeekState(peeked: boolean): void {
  *  current bounds keeps the arrow honest regardless of where things really
  *  are. Falls back to the given default when no windows are visible yet. */
 function actualStackCenterY(fallback: number): number {
-  const wins = [
-    ...Array.from(getAllClockWindows().values()),
-    getStatesButtonWindow(),
-    getMasterSettingsWindow(),
-    getPopulationButtonWindow()
-  ].filter((w): w is BrowserWindow => !!w && !w.isDestroyed() && w.isVisible())
+  const labeled: Array<[string, ReturnType<typeof getStatesButtonWindow>]> = [
+    ...Array.from(getAllClockWindows().entries()).map(
+      ([id, w]) => [`clock:${id}`, w] as [string, BrowserWindow]
+    ),
+    ['statesButton', getStatesButtonWindow()],
+    ['masterSettings', getMasterSettingsWindow()],
+    ['populationButton', getPopulationButtonWindow()]
+  ]
+  const wins = labeled.filter(
+    (pair): pair is [string, BrowserWindow] => !!pair[1] && !pair[1].isDestroyed() && pair[1].isVisible()
+  )
 
   logDebug(`  actualStackCenterY: ${wins.length} visible windows counted (fallback=${fallback})`)
+  wins.forEach(([label, w]) => {
+    const b = w.getBounds()
+    logDebug(`    ${label}: y=${b.y} height=${b.height} bottom=${b.y + b.height}`)
+  })
   if (wins.length === 0) return fallback
 
-  const tops = wins.map((w) => w.getBounds().y)
-  const bottoms = wins.map((w) => {
+  const tops = wins.map(([, w]) => w.getBounds().y)
+  const bottoms = wins.map(([, w]) => {
     const b = w.getBounds()
     return b.y + b.height
   })

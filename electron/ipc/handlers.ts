@@ -11,7 +11,7 @@ import {
 import { getSettingsWindow } from '../windows/createSettingsWindow'
 import { createStatesWindow } from '../windows/createStatesWindow'
 import { getStatesButtonWindow } from '../windows/createStatesButtonWindow'
-import { getMasterSettingsWindow, setMasterSettingsExpanded } from '../windows/createMasterSettingsWindow'
+import { getMasterSettingsWindow } from '../windows/createMasterSettingsWindow'
 import { refreshTrayMenu } from '../tray/tray'
 
 function broadcastSettings(): void {
@@ -149,10 +149,6 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('set-clock-menu-open', (_e, id: ClockId, open: boolean) => {
     setClockMenuExpanded(id, open)
-  })
-
-  ipcMain.handle('set-master-menu-open', (_e, open: boolean) => {
-    setMasterSettingsExpanded(open)
   })
 
   ipcMain.handle('get-clock-id', (event) => {

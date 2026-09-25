@@ -4,11 +4,6 @@ import { DEFAULT_WIDTH, MASTER_SETTINGS_HEIGHT, defaultMasterSettingsPosition } 
 
 let masterSettingsWindow: BrowserWindow | null = null
 
-/** Same reasoning as the clock widgets' gear menu: a BrowserWindow can't
- *  paint outside its own bounds, so opening the panel grows the window
- *  downward (toward the top card) to make room, then shrinks back on close. */
-const PANEL_EXTRA_HEIGHT = 230
-
 function windowIsDev(): boolean {
   return !!process.env.ELECTRON_RENDERER_URL
 }
@@ -25,14 +20,12 @@ export function createMasterSettingsWindow(alwaysOnTop: boolean): BrowserWindow 
     height: MASTER_SETTINGS_HEIGHT,
     frame: false,
     transparent: true,
-    backgroundColor: '#00000000',
     alwaysOnTop,
     skipTaskbar: true,
     resizable: false,
     movable: false,
     show: false,
     hasShadow: false,
-    roundedCorners: true,
     thickFrame: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -58,10 +51,4 @@ export function createMasterSettingsWindow(alwaysOnTop: boolean): BrowserWindow 
 
 export function getMasterSettingsWindow(): BrowserWindow | null {
   return masterSettingsWindow
-}
-
-export function setMasterSettingsExpanded(expanded: boolean): void {
-  const win = masterSettingsWindow
-  if (!win || win.isDestroyed()) return
-  win.setSize(DEFAULT_WIDTH, expanded ? MASTER_SETTINGS_HEIGHT + PANEL_EXTRA_HEIGHT : MASTER_SETTINGS_HEIGHT)
 }

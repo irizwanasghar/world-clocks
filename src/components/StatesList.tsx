@@ -30,20 +30,28 @@ export function StatesList({ use12Hour }: StatesListProps): JSX.Element {
 
   return (
     <>
-      <input
-        className="modal-search"
-        type="text"
-        placeholder="Search state or abbreviation…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        autoFocus
-      />
+      <div className="modal-search-wrap">
+        <span className="modal-search-icon">⌕</span>
+        <input
+          className="modal-search"
+          type="text"
+          placeholder="Search state or abbreviation…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          autoFocus
+        />
+        {query.length > 0 && (
+          <button className="modal-search-clear" onClick={() => setQuery('')} aria-label="Clear search">
+            ✕
+          </button>
+        )}
+      </div>
 
       <div className="modal-filters">
         {ZONE_FILTERS.map((zone) => (
           <button
             key={zone}
-            className={`filter-pill ${zoneFilter === zone ? 'active' : ''}`}
+            className={`filter-pill zone-${zone.toLowerCase()} ${zoneFilter === zone ? 'active' : ''}`}
             onClick={() => setZoneFilter(zone)}
           >
             {zone}
@@ -51,14 +59,22 @@ export function StatesList({ use12Hour }: StatesListProps): JSX.Element {
         ))}
       </div>
 
+      <div className="modal-count">
+        {filtered.length} {filtered.length === 1 ? 'state' : 'states'}
+      </div>
+
       <div className="modal-list">
-        {filtered.length === 0 && <div className="modal-empty">No states match.</div>}
+        {filtered.length === 0 && (
+          <div className="modal-empty">
+            <div className="modal-empty-icon">🔍</div>
+            No states match your search.
+          </div>
+        )}
         {filtered.map((s) => (
           <div className="modal-row" key={s.abbreviation}>
-            <span className="modal-row-name">
-              {s.name} <span className="modal-row-abbr">{s.abbreviation}</span>
-            </span>
-            <span className="modal-row-zone">{s.zone}</span>
+            <span className={`modal-row-abbr zone-${s.zone.toLowerCase()}`}>{s.abbreviation}</span>
+            <span className="modal-row-name">{s.name}</span>
+            <span className={`modal-row-zone-tag zone-${s.zone.toLowerCase()}`}>{s.zone}</span>
             <span className="modal-row-time">{formatTime(s.timezone, use12Hour, false)}</span>
           </div>
         ))}

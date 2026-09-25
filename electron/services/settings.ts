@@ -20,7 +20,7 @@ const DEFAULT_HEIGHT = 116
 const MARGIN = 14
 const RIGHT_MARGIN = 22
 export const STATES_BUTTON_HEIGHT = 54
-export const MASTER_SETTINGS_HEIGHT = 54
+export const MASTER_SETTINGS_HEIGHT = 220
 
 const STACK_COUNT = CLOCK_DEFINITIONS.length + 1 // + the "See all states" button
 

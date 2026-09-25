@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { AppSettings, GlobalSettings } from './types'
+import { Toggle } from './components/Toggle'
 
 export function MasterSettingsApp(): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null)
-  const [open, setOpen] = useState(false)
-  const [panelHeight, setPanelHeight] = useState<number | null>(null)
 
   useEffect(() => {
     window.desktopAPI.getSettings().then(setSettings)
@@ -24,29 +23,6 @@ export function MasterSettingsApp(): JSX.Element | null {
     }
   }, [settings?.global.theme])
 
-  const closePanel = (): void => {
-    setOpen(false)
-    setPanelHeight(null)
-    window.desktopAPI.setMasterMenuOpen(false)
-  }
-
-  const togglePanel = (): void => {
-    if (open) {
-      closePanel()
-      return
-    }
-    setPanelHeight(document.documentElement.clientHeight - 16)
-    setOpen(true)
-    window.desktopAPI.setMasterMenuOpen(true)
-  }
-
-  useEffect(() => {
-    if (!open) return
-    document.addEventListener('click', closePanel)
-    return () => document.removeEventListener('click', closePanel)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
   if (!settings) return null
 
   const updateGlobal = (partial: Partial<GlobalSettings>): void => {
@@ -57,46 +33,30 @@ export function MasterSettingsApp(): JSX.Element | null {
 
   return (
     <div className="clock-widget-outer">
-      <div className="states-button-widget">
-        <button
-          className="states-launch-btn"
-          onClick={(e) => {
-            e.stopPropagation()
-            togglePanel()
-          }}
-        >
-          ⚙ Settings (All)
-        </button>
-      </div>
-
-      {open && (
-        <div
-          className="gear-menu"
-          onClick={(e) => e.stopPropagation()}
-          style={panelHeight ? { top: `${panelHeight + 16}px` } : undefined}
-        >
-          <button className="menu-item" onClick={() => updateGlobal({ showSeconds: !g.showSeconds })}>
-            {g.showSeconds ? '✓ ' : ''}Show seconds
-          </button>
-          <button className="menu-item" onClick={() => updateGlobal({ use12Hour: !g.use12Hour })}>
-            {g.use12Hour ? '12-hour' : '24-hour'} (toggle)
-          </button>
-          <button className="menu-item" onClick={() => updateGlobal({ alwaysOnTop: !g.alwaysOnTop })}>
-            {g.alwaysOnTop ? '✓ ' : ''}Always on top
-          </button>
-          <div className="menu-item opacity-row">
-            <span>Opacity</span>
-            <input
-              type="range"
-              min={0.2}
-              max={1}
-              step={0.05}
-              value={g.opacity}
-              onChange={(e) => updateGlobal({ opacity: Number(e.target.value) })}
-            />
-          </div>
+      <div className="master-panel">
+        <div className="master-panel-header">
+          <span className="master-panel-icon">⚙</span>
+          <span className="master-panel-title">All Clocks</span>
         </div>
-      )}
+
+        <Toggle label="Show seconds" checked={g.showSeconds} onChange={(v) => updateGlobal({ showSeconds: v })} />
+        <Toggle label="12-hour format" checked={g.use12Hour} onChange={(v) => updateGlobal({ use12Hour: v })} />
+        <Toggle label="Always on top" checked={g.alwaysOnTop} onChange={(v) => updateGlobal({ alwaysOnTop: v })} />
+
+        <div className="master-opacity-row">
+          <span>Opacity</span>
+          <span className="master-opacity-value">{Math.round(g.opacity * 100)}%</span>
+        </div>
+        <input
+          className="master-opacity-slider"
+          type="range"
+          min={0.2}
+          max={1}
+          step={0.05}
+          value={g.opacity}
+          onChange={(e) => updateGlobal({ opacity: Number(e.target.value) })}
+        />
+      </div>
     </div>
   )
 }

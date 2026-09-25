@@ -1,12 +1,12 @@
 import { app, BrowserWindow, Menu } from 'electron'
 import { CLOCK_DEFINITIONS } from '../src/data/timezones'
 import { settingsStore, initSettingsStore } from './services/settings'
-import { createClockWindow } from './windows/createClockWindow'
+import { createClockWindow, getClockWindow } from './windows/createClockWindow'
 import { createSettingsWindow, getSettingsWindow } from './windows/createSettingsWindow'
-import { createStatesButtonWindow } from './windows/createStatesButtonWindow'
-import { createMasterSettingsWindow } from './windows/createMasterSettingsWindow'
-import { createPopulationButtonWindow } from './windows/createPopulationButtonWindow'
-import { createPeekButtonWindow } from './windows/createPeekButtonWindow'
+import { createStatesButtonWindow, getStatesButtonWindow } from './windows/createStatesButtonWindow'
+import { createMasterSettingsWindow, getMasterSettingsWindow } from './windows/createMasterSettingsWindow'
+import { createPopulationButtonWindow, getPopulationButtonWindow } from './windows/createPopulationButtonWindow'
+import { createPeekButtonWindow, getPeekButtonWindow } from './windows/createPeekButtonWindow'
 import { createTray } from './tray/tray'
 import { registerIpcHandlers, applyPeekState } from './ipc/handlers'
 import { initAutoUpdater, checkForUpdates } from './services/updater'
@@ -57,10 +57,13 @@ if (!gotLock) {
     const settings = settingsStore.getAll()
     CLOCK_DEFINITIONS.forEach((def) => {
       const state = settings.clocks[def.id]
-      if (state.enabled) {
-        const win = createClockWindow(def.id)
-        if (state.visible) win.show()
-      }
+      // createClockWindow already shows the window itself, once ready —
+      // via a 'ready-to-show' handler that applies the rounded-corner clip
+      // shape first and only shows afterward. Calling win.show() again
+      // here, synchronously, would show the window in its raw unshaped
+      // state before that handler ever runs, racing against it for no
+      // reason (creating the window is enough; showing is its own job).
+      if (state.enabled) createClockWindow(def.id)
     })
     createStatesButtonWindow(settings.global.alwaysOnTop)
     createMasterSettingsWindow(settings.global.alwaysOnTop)
@@ -70,6 +73,29 @@ if (!gotLock) {
     if (settings.global.peeked) {
       applyPeekState(true)
     }
+
+    // Defensive re-assertion: every widget's alwaysOnTop is already set at
+    // construction, but doing one more pass after the whole startup
+    // sequence (all 5 clocks + 4 buttons created, shown, and positioned)
+    // guarantees the final z-order state is consistent, rather than
+    // depending on however the OS happened to interleave each window's own
+    // async ready-to-show/show calls during the loop above.
+    setTimeout(() => {
+      const alwaysOnTop = settingsStore.getAll().global.alwaysOnTop
+      const allWidgetWindows = [
+        ...CLOCK_DEFINITIONS.map((def) => getClockWindow(def.id)),
+        getStatesButtonWindow(),
+        getMasterSettingsWindow(),
+        getPopulationButtonWindow(),
+        getPeekButtonWindow()
+      ]
+      allWidgetWindows.forEach((win) => {
+        if (win && !win.isDestroyed() && win.isVisible()) {
+          win.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
+          win.moveTop()
+        }
+      })
+    }, 500)
 
     initAutoUpdater()
 

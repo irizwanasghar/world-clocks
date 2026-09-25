@@ -60,6 +60,7 @@ export interface DesktopAPI {
   resizeClockWindow: (id: ClockId, width: number, height: number) => Promise<void>
   closeSettingsWindow: () => Promise<void>
   openStatesWindow: () => Promise<void>
+  setClockMenuOpen: (id: ClockId, open: boolean) => Promise<void>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
 }
 

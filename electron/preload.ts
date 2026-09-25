@@ -21,6 +21,7 @@ const api: DesktopAPI = {
     ipcRenderer.invoke('resize-clock-window', id, width, height),
   closeSettingsWindow: () => ipcRenderer.invoke('close-settings-window'),
   openStatesWindow: () => ipcRenderer.invoke('open-states-window'),
+  setClockMenuOpen: (id: ClockId, open: boolean) => ipcRenderer.invoke('set-clock-menu-open', id, open),
   onSettingsChanged: (callback: (settings: AppSettings) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
       callback(settings)

@@ -4,9 +4,27 @@ import type { ClockId } from '../../src/types'
 import { settingsStore } from '../services/settings'
 
 const clockWindows = new Map<ClockId, BrowserWindow>()
+const suppressedSaves = new Set<ClockId>()
+const suppressTimers = new Map<ClockId, NodeJS.Timeout>()
+
+/** Menus need more screen space than a widget's normal card height, but a
+ *  BrowserWindow can't paint content outside its own bounds. Growing the
+ *  window while the menu is open (and shrinking it back after) lets the menu
+ *  render without being clipped, while keeping the persisted size unaffected. */
+const MENU_EXTRA_HEIGHT = 235
 
 function windowIsDev(): boolean {
   return !!process.env.ELECTRON_RENDERER_URL
+}
+
+function suppressSaveBriefly(id: ClockId): void {
+  const existing = suppressTimers.get(id)
+  if (existing) clearTimeout(existing)
+  suppressedSaves.add(id)
+  suppressTimers.set(
+    id,
+    setTimeout(() => suppressedSaves.delete(id), 500)
+  )
 }
 
 export function createClockWindow(id: ClockId): BrowserWindow {
@@ -58,7 +76,7 @@ export function createClockWindow(id: ClockId): BrowserWindow {
   const scheduleSave = () => {
     if (saveTimer) clearTimeout(saveTimer)
     saveTimer = setTimeout(() => {
-      if (win.isDestroyed()) return
+      if (win.isDestroyed() || suppressedSaves.has(id)) return
       const bounds = win.getBounds()
       settingsStore.updateClock(id, { ...bounds })
     }, 300)
@@ -79,6 +97,14 @@ export function createClockWindow(id: ClockId): BrowserWindow {
 
 export function getClockWindow(id: ClockId): BrowserWindow | undefined {
   return clockWindows.get(id)
+}
+
+export function setClockMenuExpanded(id: ClockId, expanded: boolean): void {
+  const win = clockWindows.get(id)
+  if (!win || win.isDestroyed()) return
+  const state = settingsStore.getClock(id)
+  suppressSaveBriefly(id)
+  win.setSize(state.width, expanded ? state.height + MENU_EXTRA_HEIGHT : state.height)
 }
 
 export function getAllClockWindows(): Map<ClockId, BrowserWindow> {

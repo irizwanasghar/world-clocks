@@ -5,7 +5,8 @@ import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 import {
   createClockWindow,
   getClockWindow,
-  getAllClockWindows
+  getAllClockWindows,
+  setClockMenuExpanded
 } from '../windows/createClockWindow'
 import { getSettingsWindow } from '../windows/createSettingsWindow'
 import { createStatesWindow } from '../windows/createStatesWindow'
@@ -127,6 +128,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('open-states-window', () => {
     createStatesWindow()
+  })
+
+  ipcMain.handle('set-clock-menu-open', (_e, id: ClockId, open: boolean) => {
+    setClockMenuExpanded(id, open)
   })
 
   ipcMain.handle('get-clock-id', (event) => {

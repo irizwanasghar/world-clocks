@@ -13,40 +13,70 @@ interface ClockWidgetProps {
 export function ClockWidget({ definition, global, onUpdateGlobal, onHide }: ClockWidgetProps): JSX.Element {
   const { time, date } = useClock(definition.timezone, global.use12Hour, global.showSeconds)
   const [menuOpen, setMenuOpen] = useState(false)
+  // Captured window height (minus the gutter) right before the menu opens, so
+  // the card keeps its normal size while the window grows beneath it for the
+  // menu, instead of the card itself stretching.
+  const [cardHeight, setCardHeight] = useState<number | null>(null)
+
+  const closeMenu = (): void => {
+    setMenuOpen(false)
+    setCardHeight(null)
+    window.desktopAPI.setClockMenuOpen(definition.id, false)
+  }
+
+  const toggleMenu = (): void => {
+    if (menuOpen) {
+      closeMenu()
+      return
+    }
+    setCardHeight(document.documentElement.clientHeight - 16)
+    setMenuOpen(true)
+    window.desktopAPI.setClockMenuOpen(definition.id, true)
+  }
 
   useEffect(() => {
-    const onClickAway = (): void => setMenuOpen(false)
-    if (menuOpen) document.addEventListener('click', onClickAway)
-    return () => document.removeEventListener('click', onClickAway)
+    if (!menuOpen) return
+    document.addEventListener('click', closeMenu)
+    return () => document.removeEventListener('click', closeMenu)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuOpen])
 
   return (
-    <div
-      className="clock-widget"
-      style={{ ['--glass-alpha' as string]: String(global.opacity) }}
-    >
-      <div className="clock-drag-region">
-        <button
-          className="gear-button"
-          aria-label="Clock settings"
-          onClick={(e) => {
-            e.stopPropagation()
-            setMenuOpen((v) => !v)
-          }}
-        >
-          ⚙
-        </button>
+    <div className="clock-widget-outer">
+      <div
+        className="clock-widget"
+        style={{
+          ['--glass-alpha' as string]: String(global.opacity),
+          ...(cardHeight ? { height: `${cardHeight}px` } : {})
+        }}
+      >
+        <div className="clock-drag-region">
+          <button
+            className="gear-button"
+            aria-label="Clock settings"
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleMenu()
+            }}
+          >
+            ⚙
+          </button>
 
-        <div className="clock-header">
-          <FlagIcon countryCode={definition.countryCode} /> {definition.label}
+          <div className="clock-header">
+            <FlagIcon countryCode={definition.countryCode} /> {definition.label}
+          </div>
+          <div className="clock-city">{definition.city}</div>
+          <div className="clock-time">{time}</div>
+          <div className="clock-date">{date}</div>
         </div>
-        <div className="clock-city">{definition.city}</div>
-        <div className="clock-time">{time}</div>
-        <div className="clock-date">{date}</div>
       </div>
 
       {menuOpen && (
-        <div className="gear-menu" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="gear-menu"
+          onClick={(e) => e.stopPropagation()}
+          style={cardHeight ? { top: `${cardHeight + 16}px` } : undefined}
+        >
           <button
             className="menu-item"
             onClick={() => onUpdateGlobal({ showSeconds: !global.showSeconds })}
@@ -73,7 +103,13 @@ export function ClockWidget({ definition, global, onUpdateGlobal, onHide }: Cloc
               onChange={(e) => onUpdateGlobal({ opacity: Number(e.target.value) })}
             />
           </div>
-          <button className="menu-item danger" onClick={() => onHide(definition.id)}>
+          <button
+            className="menu-item danger"
+            onClick={() => {
+              closeMenu()
+              onHide(definition.id)
+            }}
+          >
             Hide this clock
           </button>
         </div>

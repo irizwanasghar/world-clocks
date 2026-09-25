@@ -4,10 +4,12 @@ import {
   settingsStore,
   defaultStatesButtonPosition,
   defaultMasterSettingsPosition,
+  defaultPopulationButtonPosition,
   getScaledLayout,
   DEFAULT_WIDTH,
   STATES_BUTTON_HEIGHT,
-  MASTER_COLLAPSED_HEIGHT
+  MASTER_COLLAPSED_HEIGHT,
+  POPULATION_BUTTON_HEIGHT
 } from '../services/settings'
 import { applyRoundedShape } from '../services/windowShape'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
@@ -22,6 +24,7 @@ import { createStatesWindow } from '../windows/createStatesWindow'
 import { getStatesButtonWindow } from '../windows/createStatesButtonWindow'
 import { getMasterSettingsWindow } from '../windows/createMasterSettingsWindow'
 import { createMasterModalWindow } from '../windows/createMasterModalWindow'
+import { getPopulationButtonWindow } from '../windows/createPopulationButtonWindow'
 import { createPopulationWindow } from '../windows/createPopulationWindow'
 import { lookupCityPopulation } from '../services/census'
 import { refreshTrayMenu } from '../tray/tray'
@@ -62,6 +65,10 @@ function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
   const masterWin = getMasterSettingsWindow()
   if (masterWin && !masterWin.isDestroyed()) {
     masterWin.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
+  }
+  const populationBtnWin = getPopulationButtonWindow()
+  if (populationBtnWin && !populationBtnWin.isDestroyed()) {
+    populationBtnWin.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
   }
 }
 
@@ -160,6 +167,12 @@ export function registerIpcHandlers(): void {
       masterWin.setBounds({ x, y, width: DEFAULT_WIDTH, height: MASTER_COLLAPSED_HEIGHT })
       applyRoundedShape(masterWin, 14)
     }
+    const populationBtnWin = getPopulationButtonWindow()
+    if (populationBtnWin && !populationBtnWin.isDestroyed()) {
+      const { x, y } = defaultPopulationButtonPosition(settings.global.dockSide)
+      populationBtnWin.setBounds({ x, y, width: DEFAULT_WIDTH, height: POPULATION_BUTTON_HEIGHT })
+      applyRoundedShape(populationBtnWin, 14)
+    }
     broadcastSettings()
     return settings
   })
@@ -243,6 +256,17 @@ export function registerIpcHandlers(): void {
       applyRoundedShape(masterWin, 14)
     }
 
+    const populationBtnWin = getPopulationButtonWindow()
+    if (populationBtnWin && !populationBtnWin.isDestroyed()) {
+      populationBtnWin.setBounds({
+        x: layout.x,
+        y: layout.populationButtonY,
+        width: layout.cardWidth,
+        height: layout.buttonHeight
+      })
+      applyRoundedShape(populationBtnWin, 14)
+    }
+
     broadcastSettings()
     return settings
   })
@@ -266,6 +290,11 @@ export function registerIpcHandlers(): void {
     const masterWin = getMasterSettingsWindow()
     if (masterWin && !masterWin.isDestroyed()) {
       masterWin.setPosition(layout.x, layout.masterY)
+    }
+
+    const populationBtnWin = getPopulationButtonWindow()
+    if (populationBtnWin && !populationBtnWin.isDestroyed()) {
+      populationBtnWin.setPosition(layout.x, layout.populationButtonY)
     }
 
     broadcastSettings()

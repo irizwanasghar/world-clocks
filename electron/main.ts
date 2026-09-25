@@ -5,9 +5,7 @@ import { createClockWindow } from './windows/createClockWindow'
 import { createSettingsWindow, getSettingsWindow } from './windows/createSettingsWindow'
 import { createStatesButtonWindow } from './windows/createStatesButtonWindow'
 import { createMasterSettingsWindow } from './windows/createMasterSettingsWindow'
-// NOTE: population feature is mid-build — button window creation is
-// intentionally not wired in yet (renderer files/IPC don't exist yet).
-// import { createPopulationButtonWindow } from './windows/createPopulationButtonWindow'
+import { createPopulationButtonWindow } from './windows/createPopulationButtonWindow'
 import { createTray } from './tray/tray'
 import { registerIpcHandlers } from './ipc/handlers'
 
@@ -47,7 +45,7 @@ if (!gotLock) {
     })
     createStatesButtonWindow(settings.global.alwaysOnTop)
     createMasterSettingsWindow(settings.global.alwaysOnTop)
-    // createPopulationButtonWindow(settings.global.alwaysOnTop) — not wired yet
+    createPopulationButtonWindow(settings.global.alwaysOnTop)
 
     app.setLoginItemSettings({
       openAtLogin: settings.global.launchAtStartup,

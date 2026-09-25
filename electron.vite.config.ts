@@ -33,7 +33,9 @@ export default defineConfig({
           states: resolve(__dirname, 'src/states.html'),
           statesButton: resolve(__dirname, 'src/statesButton.html'),
           masterSettings: resolve(__dirname, 'src/masterSettings.html'),
-          masterModal: resolve(__dirname, 'src/masterModal.html')
+          masterModal: resolve(__dirname, 'src/masterModal.html'),
+          populationButton: resolve(__dirname, 'src/populationButton.html'),
+          population: resolve(__dirname, 'src/population.html')
         }
       }
     },

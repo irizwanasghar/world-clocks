@@ -29,6 +29,7 @@ const api: DesktopAPI = {
   openPopulationWindow: () => ipcRenderer.invoke('open-population-window'),
   lookupPopulation: (city: string, stateAbbr: string) =>
     ipcRenderer.invoke('lookup-population', city, stateAbbr),
+  listStateCities: (stateAbbr: string) => ipcRenderer.invoke('list-state-cities', stateAbbr),
   onSettingsChanged: (callback: (settings: AppSettings) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
       callback(settings)

@@ -701,10 +701,51 @@ body,
   padding: 9px 8px;
   border-radius: 10px;
   transition: background 0.12s ease;
+  width: 100%;
 }
 
 .modal-row:hover {
   background: var(--panel-bg-alt);
+}
+
+.modal-row-clickable {
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+
+.modal-row-chevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+.modal-back-btn {
+  -webkit-app-region: no-drag;
+  border: none;
+  background: transparent;
+  color: var(--accent-soft);
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0 10px;
+}
+
+.modal-back-btn:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.modal-subtitle {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: var(--text-primary);
 }
 
 .modal-row-abbr {
@@ -785,9 +826,10 @@ body,
   font-size: 12.5px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  width: 68px;
+  min-width: 68px;
   flex-shrink: 0;
   text-align: right;
+  margin-left: auto;
 }
 
 .modal-empty {

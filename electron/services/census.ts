@@ -17,18 +17,14 @@ export class MissingApiKeyError extends Error {
   }
 }
 
-/** Looks up a US city's latest population estimate from the Census Bureau's
- *  public API. Runs in the main process so the renderer's CSP never needs to
- *  allow an external network request. Returns null if no match is found.
- *  Throws MissingApiKeyError if the Bureau rejects the request for lacking
- *  a key (place-level wildcard queries require one; the redirect target is
- *  an HTML "missing key" page, not JSON — this is detected explicitly
- *  rather than surfacing as a raw JSON-parse error). */
-export async function lookupCityPopulation(
-  city: string,
-  stateAbbr: string,
-  apiKey: string
-): Promise<PopulationResult | null> {
+/** Fetches every place (city/town) the Census Bureau has population data for
+ *  in the given state. Runs in the main process so the renderer's CSP never
+ *  needs to allow an external network request. Throws MissingApiKeyError if
+ *  the Bureau rejects the request for lacking a key (place-level wildcard
+ *  queries require one; the redirect target is an HTML "missing key" page,
+ *  not JSON — detected explicitly rather than surfacing as a raw
+ *  JSON-parse error). */
+async function fetchPlacesInState(stateAbbr: string, apiKey: string): Promise<string[][]> {
   const fips = STATE_FIPS[stateAbbr.toUpperCase()]
   if (!fips) throw new Error(`Unknown state: ${stateAbbr}`)
 
@@ -55,7 +51,17 @@ export async function lookupCityPopulation(
 
   const rows = (await response.json()) as string[][]
   // First row is the header: ["NAME", "B01003_001E", "state", "place"].
-  const dataRows = rows.slice(1)
+  return rows.slice(1)
+}
+
+/** Looks up a single US city's latest population estimate. Returns null if
+ *  no match is found. */
+export async function lookupCityPopulation(
+  city: string,
+  stateAbbr: string,
+  apiKey: string
+): Promise<PopulationResult | null> {
+  const dataRows = await fetchPlacesInState(stateAbbr, apiKey)
   const query = normalize(city)
 
   let bestMatch: string[] | null = null
@@ -77,4 +83,17 @@ export async function lookupCityPopulation(
     population: parseInt(bestMatch[1], 10),
     year: ACS_YEAR
   }
+}
+
+/** Lists every city/town the Census Bureau has population data for in a
+ *  state, sorted by population descending (largest cities first). */
+export async function listCitiesInState(stateAbbr: string, apiKey: string): Promise<PopulationResult[]> {
+  const dataRows = await fetchPlacesInState(stateAbbr, apiKey)
+  return dataRows
+    .map((row) => ({
+      name: row[0],
+      population: parseInt(row[1], 10) || 0,
+      year: ACS_YEAR
+    }))
+    .sort((a, b) => b.population - a.population)
 }

@@ -115,6 +115,9 @@ export interface DesktopAPI {
     city: string,
     stateAbbr: string
   ) => Promise<{ ok: true; result: PopulationResult | null } | { ok: false; error: string }>
+  listStateCities: (
+    stateAbbr: string
+  ) => Promise<{ ok: true; results: PopulationResult[] } | { ok: false; error: string }>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
   onClockMenuClosed: (callback: () => void) => () => void
 }

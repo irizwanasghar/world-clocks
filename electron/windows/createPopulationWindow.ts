@@ -16,9 +16,9 @@ export function createPopulationWindow(): BrowserWindow {
 
   const win = new BrowserWindow({
     width: 340,
-    height: 360,
+    height: 540,
     minWidth: 300,
-    minHeight: 320,
+    minHeight: 420,
     title: 'City Population',
     frame: true,
     show: false,

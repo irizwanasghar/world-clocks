@@ -31,7 +31,7 @@ import { createMasterModalWindow } from '../windows/createMasterModalWindow'
 import { getPopulationButtonWindow } from '../windows/createPopulationButtonWindow'
 import { createPopulationWindow } from '../windows/createPopulationWindow'
 import { getPeekButtonWindow } from '../windows/createPeekButtonWindow'
-import { lookupCityPopulation, MissingApiKeyError } from '../services/census'
+import { lookupCityPopulation, listCitiesInState, MissingApiKeyError } from '../services/census'
 import { refreshTrayMenu } from '../tray/tray'
 
 /** Pushes the latest settings to every window that reads them, not just the
@@ -304,6 +304,19 @@ export function registerIpcHandlers(): void {
       const apiKey = settingsStore.getAll().global.censusApiKey
       const result = await lookupCityPopulation(city, stateAbbr, apiKey)
       return { ok: true as const, result }
+    } catch (err) {
+      if (err instanceof MissingApiKeyError) {
+        return { ok: false as const, error: 'missing-api-key' }
+      }
+      return { ok: false as const, error: err instanceof Error ? err.message : 'Lookup failed' }
+    }
+  })
+
+  ipcMain.handle('list-state-cities', async (_e, stateAbbr: string) => {
+    try {
+      const apiKey = settingsStore.getAll().global.censusApiKey
+      const results = await listCitiesInState(stateAbbr, apiKey)
+      return { ok: true as const, results }
     } catch (err) {
       if (err instanceof MissingApiKeyError) {
         return { ok: false as const, error: 'missing-api-key' }

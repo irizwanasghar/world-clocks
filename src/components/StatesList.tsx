@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { US_STATES, type UsTimeZone } from '../data/usStates'
+import { US_STATES, type UsState, type UsTimeZone } from '../data/usStates'
 import { formatTime } from '../hooks/useClock'
+import { StateCitiesView } from './StateCitiesView'
 
 interface StatesListProps {
   use12Hour: boolean
@@ -11,6 +12,7 @@ const ZONE_FILTERS: Array<UsTimeZone | 'All'> = ['All', 'Eastern', 'Central', 'M
 export function StatesList({ use12Hour }: StatesListProps): JSX.Element {
   const [query, setQuery] = useState('')
   const [zoneFilter, setZoneFilter] = useState<UsTimeZone | 'All'>('All')
+  const [selectedState, setSelectedState] = useState<UsState | null>(null)
   const [, setTick] = useState(0)
 
   useEffect(() => {
@@ -27,6 +29,10 @@ export function StatesList({ use12Hour }: StatesListProps): JSX.Element {
       return matchesZone && matchesQuery
     })
   }, [query, zoneFilter])
+
+  if (selectedState) {
+    return <StateCitiesView state={selectedState} onBack={() => setSelectedState(null)} />
+  }
 
   return (
     <>
@@ -71,12 +77,13 @@ export function StatesList({ use12Hour }: StatesListProps): JSX.Element {
           </div>
         )}
         {filtered.map((s) => (
-          <div className="modal-row" key={s.abbreviation}>
+          <button className="modal-row modal-row-clickable" key={s.abbreviation} onClick={() => setSelectedState(s)}>
             <span className={`modal-row-abbr zone-${s.zone.toLowerCase()}`}>{s.abbreviation}</span>
             <span className="modal-row-name">{s.name}</span>
             <span className={`modal-row-zone-tag zone-${s.zone.toLowerCase()}`}>{s.zone}</span>
             <span className="modal-row-time">{formatTime(s.timezone, use12Hour, false)}</span>
-          </div>
+            <span className="modal-row-chevron">›</span>
+          </button>
         ))}
       </div>
     </>

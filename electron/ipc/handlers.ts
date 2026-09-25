@@ -103,8 +103,23 @@ export function applyPeekState(peeked: boolean): void {
     const stackX = peeked ? peekedX(layout.cardWidth, side, workArea) : layout.x
     const peekBtnX =
       side === 'right' ? stackX - PEEK_BUTTON_WIDTH - PEEK_BUTTON_GAP : stackX + layout.cardWidth + PEEK_BUTTON_GAP
-    peekBtnWin.setPosition(peekBtnX, layout.peekButtonY)
+    movePeekButton(peekBtnWin, peekBtnX, layout.peekButtonY)
   }
+}
+
+/** Repositions the peek arrow and forces a repaint afterward. On Windows, a
+ *  small layered (transparent, no-shadow) window that's moved purely via
+ *  setPosition — with no size or content change — can occasionally leave a
+ *  stale frame behind instead of repainting at the new location. A 1px
+ *  size nudge forces Windows to recompute and repaint the window's region;
+ *  webContents.invalidate() doesn't apply here (offscreen-rendering only),
+ *  so this is the reliable equivalent for a normal window. */
+function movePeekButton(win: BrowserWindow, x: number, y: number): void {
+  win.setPosition(x, y)
+  if (win.isDestroyed()) return
+  const [w, h] = win.getSize()
+  win.setSize(w + 1, h)
+  win.setSize(w, h)
 }
 
 function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
@@ -233,7 +248,7 @@ export function registerIpcHandlers(): void {
     const peekBtnWin = getPeekButtonWindow()
     if (peekBtnWin && !peekBtnWin.isDestroyed()) {
       const layout = getScaledLayout(1, settings.global.dockSide)
-      peekBtnWin.setPosition(layout.peekButtonX, layout.peekButtonY)
+      movePeekButton(peekBtnWin, layout.peekButtonX, layout.peekButtonY)
     }
     broadcastSettings()
     return settings
@@ -343,7 +358,7 @@ export function registerIpcHandlers(): void {
 
     const peekBtnWin = getPeekButtonWindow()
     if (peekBtnWin && !peekBtnWin.isDestroyed()) {
-      peekBtnWin.setPosition(layout.peekButtonX, layout.peekButtonY)
+      movePeekButton(peekBtnWin, layout.peekButtonX, layout.peekButtonY)
     }
 
     broadcastSettings()
@@ -380,7 +395,7 @@ export function registerIpcHandlers(): void {
 
     const peekBtnWin = getPeekButtonWindow()
     if (peekBtnWin && !peekBtnWin.isDestroyed()) {
-      peekBtnWin.setPosition(layout.peekButtonX, layout.peekButtonY)
+      movePeekButton(peekBtnWin, layout.peekButtonX, layout.peekButtonY)
     }
 
     broadcastSettings()

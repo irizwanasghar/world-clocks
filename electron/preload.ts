@@ -22,11 +22,17 @@ const api: DesktopAPI = {
   closeSettingsWindow: () => ipcRenderer.invoke('close-settings-window'),
   openStatesWindow: () => ipcRenderer.invoke('open-states-window'),
   setClockMenuOpen: (id: ClockId, open: boolean) => ipcRenderer.invoke('set-clock-menu-open', id, open),
+  setMasterMenuOpen: (open: boolean) => ipcRenderer.invoke('set-master-menu-open', open),
   onSettingsChanged: (callback: (settings: AppSettings) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
       callback(settings)
     ipcRenderer.on('settings-changed', listener)
     return () => ipcRenderer.removeListener('settings-changed', listener)
+  },
+  onMasterPanelCollapsed: (callback: () => void) => {
+    const listener = (): void => callback()
+    ipcRenderer.on('master-panel-collapsed', listener)
+    return () => ipcRenderer.removeListener('master-panel-collapsed', listener)
   }
 }
 

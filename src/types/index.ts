@@ -58,9 +58,17 @@ export interface EffectiveClockSettings {
   opacity: number
 }
 
+/** Persisted size of the master settings panel while expanded, so a manual
+ *  resize sticks across launches even though the panel starts collapsed. */
+export interface MasterPanelState {
+  width: number
+  height: number
+}
+
 export interface AppSettings {
   clocks: Record<ClockId, ClockState>
   global: GlobalSettings
+  masterPanel: MasterPanelState
 }
 
 export interface DesktopAPI {
@@ -79,7 +87,9 @@ export interface DesktopAPI {
   closeSettingsWindow: () => Promise<void>
   openStatesWindow: () => Promise<void>
   setClockMenuOpen: (id: ClockId, open: boolean) => Promise<void>
+  setMasterMenuOpen: (open: boolean) => Promise<void>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
+  onMasterPanelCollapsed: (callback: () => void) => () => void
 }
 
 declare global {

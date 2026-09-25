@@ -1,7 +1,14 @@
 import { app, screen } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join, dirname } from 'path'
-import type { AppSettings, ClockId, ClockOverrides, ClockState, GlobalSettings } from '../../src/types'
+import type {
+  AppSettings,
+  ClockId,
+  ClockOverrides,
+  ClockState,
+  GlobalSettings,
+  MasterPanelState
+} from '../../src/types'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 
 const STORE_FILE = join(app.getPath('userData'), 'world-clocks-settings.json')
@@ -20,11 +27,21 @@ const DEFAULT_HEIGHT = 104
 const MARGIN = 12
 const RIGHT_MARGIN = 22
 export const STATES_BUTTON_HEIGHT = 54
-export const MASTER_SETTINGS_HEIGHT = 150
+/** Height of the master settings widget in its default, collapsed (button-only)
+ *  state — this is what the layout stacks around. Expanding it grows the
+ *  window downward without affecting the other widgets' positions. */
+export const MASTER_COLLAPSED_HEIGHT = STATES_BUTTON_HEIGHT
+export const MASTER_DEFAULT_EXPANDED_HEIGHT = 176
 
-// Row 0 = master settings panel, rows 1..N = clock cards, last row = "See all states".
+const DEFAULT_MASTER_PANEL: MasterPanelState = {
+  width: DEFAULT_WIDTH,
+  height: MASTER_DEFAULT_EXPANDED_HEIGHT
+}
+
+// Row 0 = master settings widget (collapsed height), rows 1..N = clock
+// cards, last row = "See all states".
 const ROW_HEIGHTS = [
-  MASTER_SETTINGS_HEIGHT,
+  MASTER_COLLAPSED_HEIGHT,
   ...CLOCK_DEFINITIONS.map(() => DEFAULT_HEIGHT),
   STATES_BUTTON_HEIGHT
 ]
@@ -78,7 +95,13 @@ function buildDefaultSettings(): AppSettings {
   CLOCK_DEFINITIONS.forEach((def, i) => {
     clocks[def.id] = defaultClockState(i)
   })
-  return { clocks, global: { ...DEFAULT_GLOBAL } }
+  return { clocks, global: { ...DEFAULT_GLOBAL }, masterPanel: { ...DEFAULT_MASTER_PANEL } }
+}
+
+function isValidMasterPanel(value: unknown): value is MasterPanelState {
+  if (!value || typeof value !== 'object') return false
+  const v = value as Record<string, unknown>
+  return typeof v.width === 'number' && typeof v.height === 'number'
 }
 
 function isValidClockState(value: unknown): value is ClockState {
@@ -99,6 +122,7 @@ function isValidSettings(value: unknown): value is AppSettings {
   const v = value as Record<string, unknown>
   if (!v.clocks || typeof v.clocks !== 'object') return false
   if (!v.global || typeof v.global !== 'object') return false
+  if (!isValidMasterPanel(v.masterPanel)) return false
   const clocks = v.clocks as Record<string, unknown>
   for (const def of CLOCK_DEFINITIONS) {
     if (!isValidClockState(clocks[def.id])) return false
@@ -133,7 +157,8 @@ function mergeWithDefaults(parsed: unknown): AppSettings {
     }
   }
   const global = { ...defaults.global, ...(p.global ?? {}) }
-  return { clocks, global }
+  const masterPanel = isValidMasterPanel(p.masterPanel) ? p.masterPanel : defaults.masterPanel
+  return { clocks, global, masterPanel }
 }
 
 function persist(settings: AppSettings): void {
@@ -203,6 +228,16 @@ class SettingsStore {
     return this.settings
   }
 
+  getMasterPanel(): MasterPanelState {
+    return this.settings.masterPanel
+  }
+
+  updateMasterPanel(partial: Partial<MasterPanelState>): AppSettings {
+    this.settings.masterPanel = { ...this.settings.masterPanel, ...partial }
+    persist(this.settings)
+    return this.settings
+  }
+
   resetPositions(): AppSettings {
     CLOCK_DEFINITIONS.forEach((def, i) => {
       const { x, y } = defaultPositionFor(i)
@@ -234,6 +269,9 @@ export const settingsStore = {
     getInstance().updateGlobal(partial),
   clearClockOverrides: (keys: Array<keyof ClockOverrides>): AppSettings =>
     getInstance().clearClockOverrides(keys),
+  getMasterPanel: (): MasterPanelState => getInstance().getMasterPanel(),
+  updateMasterPanel: (partial: Partial<MasterPanelState>): AppSettings =>
+    getInstance().updateMasterPanel(partial),
   resetPositions: (): AppSettings => getInstance().resetPositions()
 }
 

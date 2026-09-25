@@ -4,10 +4,19 @@ import { Toggle } from './components/Toggle'
 
 export function MasterSettingsApp(): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     window.desktopAPI.getSettings().then(setSettings)
     const unsubscribe = window.desktopAPI.onSettingsChanged(setSettings)
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
+    // Main process auto-collapses the window when it loses focus (clicking
+    // elsewhere never reaches this window's own click handlers), so mirror
+    // that back into this component's open/closed state.
+    const unsubscribe = window.desktopAPI.onMasterPanelCollapsed(() => setOpen(false))
     return unsubscribe
   }, [])
 
@@ -29,7 +38,25 @@ export function MasterSettingsApp(): JSX.Element | null {
     window.desktopAPI.saveGlobalSettings(partial).then(setSettings)
   }
 
+  const toggleOpen = (): void => {
+    const next = !open
+    setOpen(next)
+    window.desktopAPI.setMasterMenuOpen(next)
+  }
+
   const g = settings.global
+
+  if (!open) {
+    return (
+      <div className="clock-widget-outer">
+        <div className="states-button-widget">
+          <button className="states-launch-btn" onClick={toggleOpen}>
+            ⚙ All Clocks Settings
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="clock-widget-outer">
@@ -37,6 +64,9 @@ export function MasterSettingsApp(): JSX.Element | null {
         <div className="master-panel-header">
           <span className="master-panel-icon">⚙</span>
           <span className="master-panel-title">All Clocks</span>
+          <button className="master-panel-close" onClick={toggleOpen} aria-label="Close">
+            ✕
+          </button>
         </div>
 
         <Toggle label="Show seconds" checked={g.showSeconds} onChange={(v) => updateGlobal({ showSeconds: v })} />
@@ -56,6 +86,8 @@ export function MasterSettingsApp(): JSX.Element | null {
           value={g.opacity}
           onChange={(e) => updateGlobal({ opacity: Number(e.target.value) })}
         />
+
+        <div className="master-panel-hint">Drag the edge to resize this panel</div>
       </div>
     </div>
   )

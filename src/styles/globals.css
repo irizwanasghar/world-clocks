@@ -785,6 +785,33 @@ body,
   font-weight: 700;
   letter-spacing: 0.2px;
   color: var(--text-primary);
+  flex: 1;
+}
+
+.master-panel-close {
+  -webkit-app-region: no-drag;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 9px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.master-panel-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.master-panel-hint {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 9.5px;
+  color: var(--text-tertiary);
+  text-align: center;
 }
 
 .master-panel .toggle-row {

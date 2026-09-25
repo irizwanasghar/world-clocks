@@ -25,6 +25,7 @@ export function createStatesButtonWindow(alwaysOnTop: boolean): BrowserWindow {
     skipTaskbar: true,
     resizable: false,
     movable: false,
+    focusable: false,
     show: false,
     hasShadow: false,
     thickFrame: false,

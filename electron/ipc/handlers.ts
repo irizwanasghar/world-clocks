@@ -11,15 +11,18 @@ import {
 import { getSettingsWindow } from '../windows/createSettingsWindow'
 import { createStatesWindow } from '../windows/createStatesWindow'
 import { getStatesButtonWindow } from '../windows/createStatesButtonWindow'
-import { getMasterSettingsWindow } from '../windows/createMasterSettingsWindow'
+import { getMasterSettingsWindow, setMasterPanelExpanded } from '../windows/createMasterSettingsWindow'
 import { refreshTrayMenu } from '../tray/tray'
 
+/** Pushes the latest settings to every window that reads them, not just the
+ *  settings window — otherwise a change made in one widget (e.g. the master
+ *  settings panel) never reaches the clock cards, which only fetch settings
+ *  once on load and then rely entirely on this push to stay in sync. */
 function broadcastSettings(): void {
   const settings = settingsStore.getAll()
-  const settingsWin = getSettingsWindow()
-  if (settingsWin && !settingsWin.isDestroyed()) {
-    settingsWin.webContents.send('settings-changed', settings)
-  }
+  BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) win.webContents.send('settings-changed', settings)
+  })
   refreshTrayMenu()
 }
 
@@ -154,6 +157,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('set-clock-menu-open', (_e, id: ClockId, open: boolean) => {
     setClockMenuExpanded(id, open)
+  })
+
+  ipcMain.handle('set-master-menu-open', (_e, open: boolean) => {
+    setMasterPanelExpanded(open)
   })
 
   ipcMain.handle('get-clock-id', (event) => {

@@ -22,9 +22,9 @@ export function ClockWidget({
   const effective = getEffectiveSettings(clockState, global)
   const { time, date } = useClock(definition.timezone, effective.use12Hour, effective.showSeconds)
   const [menuOpen, setMenuOpen] = useState(false)
-  // Captured window height (minus the gutter) right before the menu opens, so
-  // the card keeps its normal size while the window grows beneath it for the
-  // menu, instead of the card itself stretching.
+  // Captured window height right before the menu opens, so the card keeps
+  // its normal size while the window grows beneath it for the menu, instead
+  // of the card itself stretching.
   const [cardHeight, setCardHeight] = useState<number | null>(null)
 
   const closeMenu = (): void => {
@@ -38,7 +38,7 @@ export function ClockWidget({
       closeMenu()
       return
     }
-    setCardHeight(document.documentElement.clientHeight - 16)
+    setCardHeight(document.documentElement.clientHeight)
     setMenuOpen(true)
     window.desktopAPI.setClockMenuOpen(definition.id, true)
   }
@@ -84,7 +84,7 @@ export function ClockWidget({
         <div
           className="gear-menu"
           onClick={(e) => e.stopPropagation()}
-          style={cardHeight ? { top: `${cardHeight + 16}px` } : undefined}
+          style={cardHeight ? { top: `${cardHeight}px` } : undefined}
         >
           <button
             className="menu-item"

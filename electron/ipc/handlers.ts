@@ -12,6 +12,7 @@ import {
   MASTER_COLLAPSED_HEIGHT,
   POPULATION_BUTTON_HEIGHT,
   PEEK_BUTTON_WIDTH,
+  PEEK_BUTTON_HEIGHT,
   PEEK_BUTTON_GAP,
   SHARED_CENSUS_API_KEY
 } from '../services/settings'
@@ -104,8 +105,35 @@ export function applyPeekState(peeked: boolean): void {
     const stackX = peeked ? peekedX(layout.cardWidth, side, workArea) : layout.x
     const peekBtnX =
       side === 'right' ? stackX - PEEK_BUTTON_WIDTH - PEEK_BUTTON_GAP : stackX + layout.cardWidth + PEEK_BUTTON_GAP
-    movePeekButton(peekBtnWin, peekBtnX, layout.peekButtonY)
+    movePeekButton(peekBtnWin, peekBtnX, actualStackCenterY(layout.peekButtonY))
   }
+}
+
+/** The arrow's default-layout Y (from getScaledLayout) assumes every widget
+ *  still sits at its theoretical default row position. Once a card has been
+ *  dragged by the user, that assumption breaks and the arrow ends up
+ *  misaligned with the real stack — overlapping cards instead of sitting
+ *  beside them. Computing the vertical center from each window's *actual*
+ *  current bounds keeps the arrow honest regardless of where things really
+ *  are. Falls back to the given default when no windows are visible yet. */
+function actualStackCenterY(fallback: number): number {
+  const wins = [
+    ...Array.from(getAllClockWindows().values()),
+    getStatesButtonWindow(),
+    getMasterSettingsWindow(),
+    getPopulationButtonWindow()
+  ].filter((w): w is BrowserWindow => !!w && !w.isDestroyed() && w.isVisible())
+
+  if (wins.length === 0) return fallback
+
+  const tops = wins.map((w) => w.getBounds().y)
+  const bottoms = wins.map((w) => {
+    const b = w.getBounds()
+    return b.y + b.height
+  })
+  const top = Math.min(...tops)
+  const bottom = Math.max(...bottoms)
+  return Math.round((top + bottom) / 2 - PEEK_BUTTON_HEIGHT / 2)
 }
 
 /** Repositions the peek arrow and forces a repaint afterward. On Windows, a
@@ -249,7 +277,7 @@ export function registerIpcHandlers(): void {
     const peekBtnWin = getPeekButtonWindow()
     if (peekBtnWin && !peekBtnWin.isDestroyed()) {
       const layout = getScaledLayout(1, settings.global.dockSide)
-      movePeekButton(peekBtnWin, layout.peekButtonX, layout.peekButtonY)
+      movePeekButton(peekBtnWin, layout.peekButtonX, actualStackCenterY(layout.peekButtonY))
     }
     broadcastSettings()
     return settings
@@ -372,7 +400,7 @@ export function registerIpcHandlers(): void {
 
     const peekBtnWin = getPeekButtonWindow()
     if (peekBtnWin && !peekBtnWin.isDestroyed()) {
-      movePeekButton(peekBtnWin, layout.peekButtonX, layout.peekButtonY)
+      movePeekButton(peekBtnWin, layout.peekButtonX, actualStackCenterY(layout.peekButtonY))
     }
 
     broadcastSettings()
@@ -409,7 +437,7 @@ export function registerIpcHandlers(): void {
 
     const peekBtnWin = getPeekButtonWindow()
     if (peekBtnWin && !peekBtnWin.isDestroyed()) {
-      movePeekButton(peekBtnWin, layout.peekButtonX, layout.peekButtonY)
+      movePeekButton(peekBtnWin, layout.peekButtonX, actualStackCenterY(layout.peekButtonY))
     }
 
     broadcastSettings()

@@ -32,9 +32,10 @@ export const MAX_CARD_SCALE = 1.6
 export const DEFAULT_WIDTH = 236
 const DEFAULT_HEIGHT = 104
 const MARGIN = 16
-const RIGHT_MARGIN = 22
-export const PEEK_BUTTON_WIDTH = 30
-export const PEEK_BUTTON_HEIGHT = 30
+const MIN_MARGIN = 6
+const RIGHT_MARGIN = 32
+export const PEEK_BUTTON_WIDTH = 36
+export const PEEK_BUTTON_HEIGHT = 36
 export const PEEK_BUTTON_GAP = 6
 /** How much of a peeked widget's width stays visible on-screen. */
 export const PEEK_VISIBLE_PX = 28
@@ -74,6 +75,21 @@ function dockX(side: DockSide, workArea: Electron.Rectangle, width: number): num
     : workArea.x + RIGHT_MARGIN
 }
 
+/** Picks a gap between rows that guarantees the whole stack fits the work
+ *  area's height: starts from the normal MARGIN and shrinks it (down to
+ *  MIN_MARGIN) if the rows alone plus minimal top/bottom padding wouldn't
+ *  otherwise fit — e.g. on a shorter display. Below MIN_MARGIN the stack
+ *  can still overflow (rows are taller than the screen), but that's a hard
+ *  physical limit, not something spacing alone can fix. */
+function fittingMargin(rowHeights: number[], workAreaHeight: number): number {
+  const sumHeights = rowHeights.reduce((sum, h) => sum + h, 0)
+  const gaps = rowHeights.length - 1
+  if (gaps <= 0) return MARGIN
+  const availableForGaps = workAreaHeight - sumHeights - 2 * MIN_MARGIN
+  if (availableForGaps <= 0) return MIN_MARGIN
+  return Math.max(MIN_MARGIN, Math.min(MARGIN, availableForGaps / gaps))
+}
+
 /** Stacks all widgets (master panel, clock cards, states button) as one
  *  vertical group along the given edge of the primary display's work area,
  *  so the whole group is centered/clamped together — the master panel can
@@ -82,11 +98,12 @@ function defaultPositionForRow(row: number, side: DockSide = 'right'): { x: numb
   const display = screen.getPrimaryDisplay()
   const { workArea } = display
   const x = dockX(side, workArea, DEFAULT_WIDTH)
-  const totalHeight = ROW_HEIGHTS.reduce((sum, h) => sum + h, 0) + (ROW_HEIGHTS.length - 1) * MARGIN
-  const startY = workArea.y + Math.max(MARGIN, (workArea.height - totalHeight) / 2)
+  const margin = fittingMargin(ROW_HEIGHTS, workArea.height)
+  const totalHeight = ROW_HEIGHTS.reduce((sum, h) => sum + h, 0) + (ROW_HEIGHTS.length - 1) * margin
+  const startY = workArea.y + Math.max(MIN_MARGIN, (workArea.height - totalHeight) / 2)
   let y = startY
   for (let i = 0; i < row; i++) {
-    y += ROW_HEIGHTS[i] + MARGIN
+    y += ROW_HEIGHTS[i] + margin
   }
   return { x, y }
 }
@@ -132,12 +149,13 @@ export function getScaledLayout(scale: number, side: DockSide = 'right'): Scaled
   const display = screen.getPrimaryDisplay()
   const { workArea } = display
   const x = dockX(side, workArea, cardWidth)
-  const totalHeight = rowHeights.reduce((sum, h) => sum + h, 0) + (rowHeights.length - 1) * MARGIN
-  const startY = workArea.y + Math.max(MARGIN, (workArea.height - totalHeight) / 2)
+  const margin = fittingMargin(rowHeights, workArea.height)
+  const totalHeight = rowHeights.reduce((sum, h) => sum + h, 0) + (rowHeights.length - 1) * margin
+  const startY = workArea.y + Math.max(MIN_MARGIN, (workArea.height - totalHeight) / 2)
 
   const rowY = (row: number): number => {
     let y = startY
-    for (let i = 0; i < row; i++) y += rowHeights[i] + MARGIN
+    for (let i = 0; i < row; i++) y += rowHeights[i] + margin
     return y
   }
 

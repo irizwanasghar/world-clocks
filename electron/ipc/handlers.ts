@@ -200,24 +200,22 @@ function movePeekButton(win: BrowserWindow, x: number, y: number): void {
   moveWidgetWithRepaint(win, x, y, PEEK_BUTTON_WIDTH, PEEK_BUTTON_HEIGHT, 18)
 }
 
-/** Same repaint problem as movePeekButton, but for the States/Master
- *  Settings/Population buttons specifically — a size round-trip was tried
- *  here too, but even landing on the exact same fixed width/height every
- *  time, the buttons' measured bounds (as read back by actualStackCenterY)
- *  turned out to drift a little further with every single call regardless
- *  — climbing several pixels over the course of a dozen-ish peek toggles,
- *  something the tiny 36×36 peek arrow never showed under the same
- *  approach. Whatever the exact mechanism, resizing these larger windows
- *  isn't as clean as it is for the arrow, so they get a hide/show repaint
- *  instead, which never touches size at all — nothing to drift. */
+/** Repositions the States/Master Settings/Population buttons. Two different
+ *  "force a clean repaint" tricks were tried here, copying the approach
+ *  used for the small peek arrow (which genuinely does need one, being a
+ *  tiny circular-clipped window): a size round-trip, and then a hide/show
+ *  cycle. Debug logging proved BOTH made things worse for these larger
+ *  buttons specifically — their measured height climbed a little further
+ *  with literally every single call, all three growing in lockstep,
+ *  regardless of which trick was used. Whatever the underlying Windows/
+ *  Electron quirk is, it's provoked by forcing a repaint on these windows
+ *  at all. Plain setPosition, with no repaint trick, has never shown this
+ *  problem — these buttons apparently don't need one in the first place;
+ *  that need was specific to the arrow's tiny clipped shape. */
 function moveButtonWithRepaint(win: BrowserWindow, x: number, y: number, shapeRadius: number): void {
   win.setPosition(x, y)
   if (win.isDestroyed()) return
   applyRoundedShape(win, shapeRadius)
-  if (win.isVisible()) {
-    win.hide()
-    win.show()
-  }
 }
 
 function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {

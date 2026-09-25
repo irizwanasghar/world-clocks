@@ -25,6 +25,9 @@ const api: DesktopAPI = {
   openMasterSettingsWindow: () => ipcRenderer.invoke('open-master-settings-window'),
   setCardScale: (scale: number) => ipcRenderer.invoke('set-card-scale', scale),
   setDockSide: (side: 'left' | 'right') => ipcRenderer.invoke('set-dock-side', side),
+  openPopulationWindow: () => ipcRenderer.invoke('open-population-window'),
+  lookupPopulation: (city: string, stateAbbr: string) =>
+    ipcRenderer.invoke('lookup-population', city, stateAbbr),
   onSettingsChanged: (callback: (settings: AppSettings) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
       callback(settings)

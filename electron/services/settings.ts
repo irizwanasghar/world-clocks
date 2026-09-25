@@ -43,16 +43,21 @@ const DEFAULT_MASTER_PANEL: MasterPanelState = {
   height: MASTER_DEFAULT_EXPANDED_HEIGHT
 }
 
+export const POPULATION_BUTTON_HEIGHT = STATES_BUTTON_HEIGHT
+
 // Row 0 = master settings widget (collapsed height), rows 1..N = clock
-// cards, last row = "See all states".
+// cards, then "See all states", then "Population" — both fixed-size
+// button rows at the bottom of the stack.
 const ROW_HEIGHTS = [
   MASTER_COLLAPSED_HEIGHT,
   ...CLOCK_DEFINITIONS.map(() => DEFAULT_HEIGHT),
-  STATES_BUTTON_HEIGHT
+  STATES_BUTTON_HEIGHT,
+  POPULATION_BUTTON_HEIGHT
 ]
 const MASTER_ROW = 0
 const FIRST_CLOCK_ROW = 1
-const STATES_BUTTON_ROW = ROW_HEIGHTS.length - 1
+const STATES_BUTTON_ROW = ROW_HEIGHTS.length - 2
+const POPULATION_BUTTON_ROW = ROW_HEIGHTS.length - 1
 
 type DockSide = 'left' | 'right'
 
@@ -87,6 +92,10 @@ export function defaultStatesButtonPosition(side: DockSide = 'right'): { x: numb
   return defaultPositionForRow(STATES_BUTTON_ROW, side)
 }
 
+export function defaultPopulationButtonPosition(side: DockSide = 'right'): { x: number; y: number } {
+  return defaultPositionForRow(POPULATION_BUTTON_ROW, side)
+}
+
 export function defaultMasterSettingsPosition(side: DockSide = 'right'): { x: number; y: number } {
   return defaultPositionForRow(MASTER_ROW, side)
 }
@@ -99,6 +108,7 @@ export interface ScaledLayout {
   masterY: number
   clockY: (index: number) => number
   statesButtonY: number
+  populationButtonY: number
 }
 
 /** Same vertical-stack layout as defaultPositionForRow, but computed for an
@@ -108,7 +118,7 @@ export function getScaledLayout(scale: number, side: DockSide = 'right'): Scaled
   const cardWidth = Math.round(DEFAULT_WIDTH * scale)
   const cardHeight = Math.round(DEFAULT_HEIGHT * scale)
   const buttonHeight = Math.round(STATES_BUTTON_HEIGHT * scale)
-  const rowHeights = [buttonHeight, ...CLOCK_DEFINITIONS.map(() => cardHeight), buttonHeight]
+  const rowHeights = [buttonHeight, ...CLOCK_DEFINITIONS.map(() => cardHeight), buttonHeight, buttonHeight]
 
   const display = screen.getPrimaryDisplay()
   const { workArea } = display
@@ -129,7 +139,8 @@ export function getScaledLayout(scale: number, side: DockSide = 'right'): Scaled
     buttonHeight,
     masterY: rowY(0),
     clockY: (index: number) => rowY(1 + index),
-    statesButtonY: rowY(rowHeights.length - 1)
+    statesButtonY: rowY(rowHeights.length - 2),
+    populationButtonY: rowY(rowHeights.length - 1)
   }
 }
 

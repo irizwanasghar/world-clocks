@@ -22,6 +22,8 @@ import { createStatesWindow } from '../windows/createStatesWindow'
 import { getStatesButtonWindow } from '../windows/createStatesButtonWindow'
 import { getMasterSettingsWindow } from '../windows/createMasterSettingsWindow'
 import { createMasterModalWindow } from '../windows/createMasterModalWindow'
+import { createPopulationWindow } from '../windows/createPopulationWindow'
+import { lookupCityPopulation } from '../services/census'
 import { refreshTrayMenu } from '../tray/tray'
 
 /** Pushes the latest settings to every window that reads them, not just the
@@ -193,6 +195,19 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('open-master-settings-window', () => {
     createMasterModalWindow()
+  })
+
+  ipcMain.handle('open-population-window', () => {
+    createPopulationWindow()
+  })
+
+  ipcMain.handle('lookup-population', async (_e, city: string, stateAbbr: string) => {
+    try {
+      const result = await lookupCityPopulation(city, stateAbbr)
+      return { ok: true as const, result }
+    } catch (err) {
+      return { ok: false as const, error: err instanceof Error ? err.message : 'Lookup failed' }
+    }
   })
 
   ipcMain.handle('set-card-scale', (_e, scale: number) => {

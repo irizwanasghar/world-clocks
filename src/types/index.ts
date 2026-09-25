@@ -76,6 +76,12 @@ export interface AppSettings {
   masterPanel: MasterPanelState
 }
 
+export interface PopulationResult {
+  name: string
+  population: number
+  year: number
+}
+
 export interface DesktopAPI {
   getSettings: () => Promise<AppSettings>
   saveGlobalSettings: (settings: Partial<GlobalSettings>) => Promise<AppSettings>
@@ -95,6 +101,11 @@ export interface DesktopAPI {
   openMasterSettingsWindow: () => Promise<void>
   setCardScale: (scale: number) => Promise<AppSettings>
   setDockSide: (side: 'left' | 'right') => Promise<AppSettings>
+  openPopulationWindow: () => Promise<void>
+  lookupPopulation: (
+    city: string,
+    stateAbbr: string
+  ) => Promise<{ ok: true; result: PopulationResult | null } | { ok: false; error: string }>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
   onClockMenuClosed: (callback: () => void) => () => void
 }

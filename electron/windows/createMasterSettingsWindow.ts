@@ -6,6 +6,7 @@ import {
   defaultMasterSettingsPosition,
   settingsStore
 } from '../services/settings'
+import { applyRoundedShape } from '../services/windowShape'
 
 let masterSettingsWindow: BrowserWindow | null = null
 let isExpanded = false
@@ -67,7 +68,10 @@ export function createMasterSettingsWindow(alwaysOnTop: boolean): BrowserWindow 
     win.loadFile(join(__dirname, '../renderer/src/masterSettings.html'))
   }
 
-  win.once('ready-to-show', () => win.show())
+  win.once('ready-to-show', () => {
+    applyRoundedShape(win, 14)
+    win.show()
+  })
 
   // A frameless popup can't reliably use a same-window "click away to
   // close" listener, because clicking anywhere outside this tiny window
@@ -83,6 +87,7 @@ export function createMasterSettingsWindow(alwaysOnTop: boolean): BrowserWindow 
 
   let saveTimer: NodeJS.Timeout | null = null
   win.on('resize', () => {
+    applyRoundedShape(win, 14)
     if (saveTimer) clearTimeout(saveTimer)
     saveTimer = setTimeout(() => {
       if (win.isDestroyed() || suppressSave || !isExpanded) return

@@ -31,7 +31,7 @@ export const STATES_BUTTON_HEIGHT = 54
  *  state — this is what the layout stacks around. Expanding it grows the
  *  window downward without affecting the other widgets' positions. */
 export const MASTER_COLLAPSED_HEIGHT = STATES_BUTTON_HEIGHT
-export const MASTER_DEFAULT_EXPANDED_HEIGHT = 176
+export const MASTER_DEFAULT_EXPANDED_HEIGHT = 200
 
 const DEFAULT_MASTER_PANEL: MasterPanelState = {
   width: DEFAULT_WIDTH,

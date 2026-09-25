@@ -1,6 +1,7 @@
 import { BrowserWindow } from 'electron'
 import { join } from 'path'
 import { DEFAULT_WIDTH, STATES_BUTTON_HEIGHT, defaultStatesButtonPosition } from '../services/settings'
+import { applyRoundedShape } from '../services/windowShape'
 
 let statesButtonWindow: BrowserWindow | null = null
 
@@ -45,7 +46,10 @@ export function createStatesButtonWindow(alwaysOnTop: boolean): BrowserWindow {
     win.loadFile(join(__dirname, '../renderer/src/statesButton.html'))
   }
 
-  win.once('ready-to-show', () => win.show())
+  win.once('ready-to-show', () => {
+    applyRoundedShape(win, 14)
+    win.show()
+  })
 
   statesButtonWindow = win
   return win

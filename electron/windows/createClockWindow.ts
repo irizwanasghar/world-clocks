@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron'
 import { join } from 'path'
 import type { ClockId } from '../../src/types'
 import { settingsStore } from '../services/settings'
+import { applyRoundedShape } from '../services/windowShape'
 
 const clockWindows = new Map<ClockId, BrowserWindow>()
 const suppressedSaves = new Set<ClockId>()
@@ -69,6 +70,7 @@ export function createClockWindow(id: ClockId): BrowserWindow {
   }
 
   win.once('ready-to-show', () => {
+    applyRoundedShape(win)
     if (state.visible && state.enabled) win.show()
   })
 
@@ -83,7 +85,10 @@ export function createClockWindow(id: ClockId): BrowserWindow {
   }
 
   win.on('move', scheduleSave)
-  win.on('resize', scheduleSave)
+  win.on('resize', () => {
+    applyRoundedShape(win)
+    scheduleSave()
+  })
 
   win.on('close', (e) => {
     e.preventDefault()

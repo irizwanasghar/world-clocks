@@ -87,7 +87,12 @@ export function MasterSettingsApp(): JSX.Element | null {
           onChange={(e) => updateGlobal({ opacity: Number(e.target.value) })}
         />
 
-        <div className="master-panel-hint">Drag the edge to resize this panel</div>
+        <button
+          className="master-reset-btn"
+          onClick={() => window.desktopAPI.resetPositions().then(setSettings)}
+        >
+          Reset Positions &amp; Size
+        </button>
       </div>
     </div>
   )

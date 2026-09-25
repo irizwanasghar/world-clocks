@@ -103,7 +103,13 @@ export function applyPeekState(peeked: boolean): void {
   buttons.forEach(([win, y]) => {
     if (!win || win.isDestroyed()) return
     const x = peeked ? peekedX(layout.cardWidth, side, workArea) : layout.x
-    win.setPosition(x, y)
+    // The peek arrow used to be the only widget moved with a repaint-forcing
+    // round-trip here (see movePeekButton) — these three buttons were just
+    // plain setPosition() calls, left exposed to the exact same "stale
+    // frame left behind" issue on Windows that justified that fix in the
+    // first place, just never applied to them. Reusing the same helper
+    // keeps all four widgets consistent.
+    moveWidgetWithRepaint(win, x, y, layout.cardWidth, layout.buttonHeight, 14)
   })
 
   // The arrow itself also follows the stack, staying just outside whichever
@@ -148,8 +154,8 @@ function actualStackCenterY(fallback: number): number {
   return result
 }
 
-/** Repositions the peek arrow and forces a repaint afterward. On Windows, a
- *  small layered (transparent, no-shadow) window that's moved purely via
+/** Repositions a small layered (transparent, no-shadow) widget window and
+ *  forces a repaint afterward. On Windows, moving such a window purely via
  *  setPosition — with no size or content change — can occasionally leave a
  *  stale frame behind instead of repainting at the new location. A brief
  *  size round-trip forces Windows to fully reallocate and repaint the
@@ -158,20 +164,31 @@ function actualStackCenterY(fallback: number): number {
  *  layered window, which risked old semi-transparent pixels compounding
  *  with new ones across repeated calls.
  *
- *  Critically, the round-trip always resets to the fixed
- *  PEEK_BUTTON_WIDTH/HEIGHT constants rather than the window's current
- *  win.getSize() — building off "whatever the current size happens to be"
- *  let any one-off DPI-scaling rounding error (converting a size through
- *  device pixels and back isn't guaranteed to land on the exact same
- *  logical pixel) persist and compound across every subsequent call. Always
- *  landing back on the same known-good absolute value means there's never
- *  anything to drift from click to click. */
-function movePeekButton(win: BrowserWindow, x: number, y: number): void {
+ *  Critically, the round-trip always resets to the given fixed width/height
+ *  rather than the window's current win.getSize() — building off "whatever
+ *  the current size happens to be" let any one-off DPI-scaling rounding
+ *  error (converting a size through device pixels and back isn't
+ *  guaranteed to land on the exact same logical pixel) persist and compound
+ *  across every subsequent call. Always landing back on the same
+ *  known-good absolute value means there's never anything to drift from
+ *  click to click. */
+function moveWidgetWithRepaint(
+  win: BrowserWindow,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  shapeRadius: number
+): void {
   win.setPosition(x, y)
   if (win.isDestroyed()) return
-  win.setSize(PEEK_BUTTON_WIDTH + 1, PEEK_BUTTON_HEIGHT)
-  win.setSize(PEEK_BUTTON_WIDTH, PEEK_BUTTON_HEIGHT)
-  applyRoundedShape(win, 18)
+  win.setSize(width + 1, height)
+  win.setSize(width, height)
+  applyRoundedShape(win, shapeRadius)
+}
+
+function movePeekButton(win: BrowserWindow, x: number, y: number): void {
+  moveWidgetWithRepaint(win, x, y, PEEK_BUTTON_WIDTH, PEEK_BUTTON_HEIGHT, 18)
 }
 
 function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
@@ -461,17 +478,24 @@ export function registerIpcHandlers(): void {
 
     const statesButtonWin = getStatesButtonWindow()
     if (statesButtonWin && !statesButtonWin.isDestroyed()) {
-      statesButtonWin.setPosition(layout.x, layout.statesButtonY)
+      moveWidgetWithRepaint(statesButtonWin, layout.x, layout.statesButtonY, layout.cardWidth, layout.buttonHeight, 14)
     }
 
     const masterWin = getMasterSettingsWindow()
     if (masterWin && !masterWin.isDestroyed()) {
-      masterWin.setPosition(layout.x, layout.masterY)
+      moveWidgetWithRepaint(masterWin, layout.x, layout.masterY, layout.cardWidth, layout.buttonHeight, 14)
     }
 
     const populationBtnWin = getPopulationButtonWindow()
     if (populationBtnWin && !populationBtnWin.isDestroyed()) {
-      populationBtnWin.setPosition(layout.x, layout.populationButtonY)
+      moveWidgetWithRepaint(
+        populationBtnWin,
+        layout.x,
+        layout.populationButtonY,
+        layout.cardWidth,
+        layout.buttonHeight,
+        14
+      )
     }
 
     const peekBtnWin = getPeekButtonWindow()

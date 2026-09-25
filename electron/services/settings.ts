@@ -16,38 +16,49 @@ const DEFAULT_GLOBAL: GlobalSettings = {
 }
 
 export const DEFAULT_WIDTH = 236
-const DEFAULT_HEIGHT = 116
-const MARGIN = 14
+const DEFAULT_HEIGHT = 104
+const MARGIN = 12
 const RIGHT_MARGIN = 22
 export const STATES_BUTTON_HEIGHT = 54
-export const MASTER_SETTINGS_HEIGHT = 220
+export const MASTER_SETTINGS_HEIGHT = 150
 
-const STACK_COUNT = CLOCK_DEFINITIONS.length + 1 // + the "See all states" button
+// Row 0 = master settings panel, rows 1..N = clock cards, last row = "See all states".
+const ROW_HEIGHTS = [
+  MASTER_SETTINGS_HEIGHT,
+  ...CLOCK_DEFINITIONS.map(() => DEFAULT_HEIGHT),
+  STATES_BUTTON_HEIGHT
+]
+const MASTER_ROW = 0
+const FIRST_CLOCK_ROW = 1
+const STATES_BUTTON_ROW = ROW_HEIGHTS.length - 1
 
-/** Stacks widgets vertically along the right edge of the primary display's work area.
- *  index === CLOCK_DEFINITIONS.length is reserved for the "See all states" button,
- *  which sits directly below the last clock card. */
-function defaultPositionFor(index: number): { x: number; y: number } {
+/** Stacks all widgets (master panel, clock cards, states button) as one
+ *  vertical group along the right edge of the primary display's work area,
+ *  so the whole group is centered/clamped together — the master panel can
+ *  never end up pushed off the top of the screen on its own. */
+function defaultPositionForRow(row: number): { x: number; y: number } {
   const display = screen.getPrimaryDisplay()
   const { x: wx, y: wy, width, height } = display.workArea
   const x = wx + width - DEFAULT_WIDTH - RIGHT_MARGIN
-  const totalHeight =
-    CLOCK_DEFINITIONS.length * DEFAULT_HEIGHT +
-    STATES_BUTTON_HEIGHT +
-    (STACK_COUNT - 1) * MARGIN
+  const totalHeight = ROW_HEIGHTS.reduce((sum, h) => sum + h, 0) + (ROW_HEIGHTS.length - 1) * MARGIN
   const startY = wy + Math.max(MARGIN, (height - totalHeight) / 2)
-  const y = startY + index * (DEFAULT_HEIGHT + MARGIN)
+  let y = startY
+  for (let i = 0; i < row; i++) {
+    y += ROW_HEIGHTS[i] + MARGIN
+  }
   return { x, y }
 }
 
-export function defaultStatesButtonPosition(): { x: number; y: number } {
-  return defaultPositionFor(CLOCK_DEFINITIONS.length)
+function defaultPositionFor(clockIndex: number): { x: number; y: number } {
+  return defaultPositionForRow(FIRST_CLOCK_ROW + clockIndex)
 }
 
-/** The master "Settings (All)" widget sits directly above the first card. */
+export function defaultStatesButtonPosition(): { x: number; y: number } {
+  return defaultPositionForRow(STATES_BUTTON_ROW)
+}
+
 export function defaultMasterSettingsPosition(): { x: number; y: number } {
-  const top = defaultPositionFor(0)
-  return { x: top.x, y: top.y - MARGIN - MASTER_SETTINGS_HEIGHT }
+  return defaultPositionForRow(MASTER_ROW)
 }
 
 function defaultClockState(index: number): ClockState {

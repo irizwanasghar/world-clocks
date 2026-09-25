@@ -20,6 +20,7 @@ export function createStatesButtonWindow(alwaysOnTop: boolean): BrowserWindow {
     height: STATES_BUTTON_HEIGHT,
     frame: false,
     transparent: true,
+    backgroundColor: '#00000000',
     alwaysOnTop,
     skipTaskbar: true,
     resizable: false,

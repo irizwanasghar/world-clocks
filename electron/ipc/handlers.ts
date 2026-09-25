@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import type { ClockId, ClockOverrides, ClockState, GlobalSettings } from '../../src/types'
-import { settingsStore, defaultStatesButtonPosition } from '../services/settings'
+import { settingsStore, defaultStatesButtonPosition, defaultMasterSettingsPosition } from '../services/settings'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 import {
   createClockWindow,
@@ -123,6 +123,11 @@ export function registerIpcHandlers(): void {
     if (statesButtonWin && !statesButtonWin.isDestroyed()) {
       const { x, y } = defaultStatesButtonPosition()
       statesButtonWin.setPosition(x, y)
+    }
+    const masterWin = getMasterSettingsWindow()
+    if (masterWin && !masterWin.isDestroyed()) {
+      const { x, y } = defaultMasterSettingsPosition()
+      masterWin.setPosition(x, y)
     }
     broadcastSettings()
     return settings

@@ -42,6 +42,7 @@ export function createClockWindow(id: ClockId): BrowserWindow {
     height: state.height,
     frame: false,
     transparent: true,
+    backgroundColor: '#00000000',
     alwaysOnTop: effectiveAlwaysOnTop,
     skipTaskbar: true,
     resizable: true,

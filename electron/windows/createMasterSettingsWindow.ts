@@ -20,6 +20,7 @@ export function createMasterSettingsWindow(alwaysOnTop: boolean): BrowserWindow 
     height: MASTER_SETTINGS_HEIGHT,
     frame: false,
     transparent: true,
+    backgroundColor: '#00000000',
     alwaysOnTop,
     skipTaskbar: true,
     resizable: false,

@@ -149,6 +149,14 @@ function movePeekButton(win: BrowserWindow, x: number, y: number): void {
   const [w, h] = win.getSize()
   win.setSize(w + 1, h)
   win.setSize(w, h)
+  // The 1px nudge above forces Windows to repaint the window, but the
+  // circular clip region (set via setShape) is a fixed pixel mask that
+  // doesn't automatically track a window's size changes — after enough
+  // nudges without reapplying it, the mask drifts out of alignment with
+  // the window's actual bounds, degrading the circle into a jagged blob.
+  // Reapplying it fresh after every nudge keeps the mask and the window
+  // bounds in sync no matter how many times this runs.
+  applyRoundedShape(win, 18)
 }
 
 function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {

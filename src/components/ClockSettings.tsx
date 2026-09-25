@@ -3,9 +3,11 @@ import type { AppSettings, ClockId, GlobalSettings, Theme } from '../types'
 import { CLOCK_DEFINITIONS } from '../data/timezones'
 import { Toggle } from './Toggle'
 import { FlagIcon } from './FlagIcon'
+import { StatesModal } from './StatesModal'
 
 export function ClockSettings(): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [statesOpen, setStatesOpen] = useState(false)
 
   useEffect(() => {
     window.desktopAPI.getSettings().then(setSettings)
@@ -53,6 +55,9 @@ export function ClockSettings(): JSX.Element | null {
             onChange={(checked) => toggleClock(def.id, checked)}
           />
         ))}
+        <button className="btn btn-secondary see-all-states" onClick={() => setStatesOpen(true)}>
+          See all states
+        </button>
       </section>
 
       <section className="settings-section">
@@ -119,6 +124,10 @@ export function ClockSettings(): JSX.Element | null {
           Reset Positions
         </button>
       </section>
+
+      {statesOpen && (
+        <StatesModal use12Hour={settings.global.use12Hour} onClose={() => setStatesOpen(false)} />
+      )}
     </div>
   )
 }

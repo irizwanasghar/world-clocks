@@ -5,7 +5,7 @@ export interface FormattedTime {
   date: string
 }
 
-function formatTime(timezone: string, use12Hour: boolean, showSeconds: boolean): string {
+export function formatTime(timezone: string, use12Hour: boolean, showSeconds: boolean): string {
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
     hour: '2-digit',

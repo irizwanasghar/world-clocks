@@ -23,11 +23,13 @@ export function createClockWindow(id: ClockId): BrowserWindow {
     height: state.height,
     frame: false,
     transparent: true,
+    backgroundColor: '#00000000',
     alwaysOnTop: global.alwaysOnTop,
     skipTaskbar: true,
     resizable: true,
     show: false,
     hasShadow: false,
+    roundedCorners: true,
     minWidth: 160,
     minHeight: 76,
     webPreferences: {

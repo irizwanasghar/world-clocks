@@ -92,11 +92,10 @@ export interface DesktopAPI {
   closeSettingsWindow: () => Promise<void>
   openStatesWindow: () => Promise<void>
   setClockMenuOpen: (id: ClockId, open: boolean) => Promise<void>
-  setMasterMenuOpen: (open: boolean) => Promise<void>
+  openMasterSettingsWindow: () => Promise<void>
   setCardScale: (scale: number) => Promise<AppSettings>
   setDockSide: (side: 'left' | 'right') => Promise<AppSettings>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
-  onMasterPanelCollapsed: (callback: () => void) => () => void
   onClockMenuClosed: (callback: () => void) => () => void
 }
 

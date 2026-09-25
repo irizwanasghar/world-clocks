@@ -375,6 +375,12 @@ body,
   width: 100%;
 }
 
+.modal-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
 .theme-control select {
   padding: 6px 8px;
   border-radius: 6px;

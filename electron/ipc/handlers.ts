@@ -20,7 +20,8 @@ import {
 import { getSettingsWindow } from '../windows/createSettingsWindow'
 import { createStatesWindow } from '../windows/createStatesWindow'
 import { getStatesButtonWindow } from '../windows/createStatesButtonWindow'
-import { getMasterSettingsWindow, setMasterPanelExpanded } from '../windows/createMasterSettingsWindow'
+import { getMasterSettingsWindow } from '../windows/createMasterSettingsWindow'
+import { createMasterModalWindow } from '../windows/createMasterModalWindow'
 import { refreshTrayMenu } from '../tray/tray'
 
 /** Pushes the latest settings to every window that reads them, not just the
@@ -35,23 +36,16 @@ function broadcastSettings(): void {
   refreshTrayMenu()
 }
 
-// Only one gear menu / the master panel can be open at a time. Each widget
-// is its own BrowserWindow with no shared renderer state, so the main
-// process is the only place that can know "something else is open" and
-// close it — tracked here.
-let openMenuOwner: ClockId | 'master' | null = null
+// Only one clock's gear menu can be open at a time. Each card is its own
+// BrowserWindow with no shared renderer state, so the main process is the
+// only place that can know "another one is open" and close it.
+let openMenuOwner: ClockId | null = null
 
 function closeOpenMenu(): void {
   if (openMenuOwner === null) return
-  if (openMenuOwner === 'master') {
-    setMasterPanelExpanded(false)
-    const masterWin = getMasterSettingsWindow()
-    if (masterWin && !masterWin.isDestroyed()) masterWin.webContents.send('master-panel-collapsed')
-  } else {
-    setClockMenuExpanded(openMenuOwner, false)
-    const win = getClockWindow(openMenuOwner)
-    if (win && !win.isDestroyed()) win.webContents.send('clock-menu-closed')
-  }
+  setClockMenuExpanded(openMenuOwner, false)
+  const win = getClockWindow(openMenuOwner)
+  if (win && !win.isDestroyed()) win.webContents.send('clock-menu-closed')
   openMenuOwner = null
 }
 
@@ -161,9 +155,7 @@ export function registerIpcHandlers(): void {
     const masterWin = getMasterSettingsWindow()
     if (masterWin && !masterWin.isDestroyed()) {
       const { x, y } = defaultMasterSettingsPosition(settings.global.dockSide)
-      setMasterPanelExpanded(false)
       masterWin.setBounds({ x, y, width: DEFAULT_WIDTH, height: MASTER_COLLAPSED_HEIGHT })
-      masterWin.webContents.send('master-panel-collapsed')
       applyRoundedShape(masterWin, 14)
     }
     broadcastSettings()
@@ -199,14 +191,8 @@ export function registerIpcHandlers(): void {
     setClockMenuExpanded(id, open)
   })
 
-  ipcMain.handle('set-master-menu-open', (_e, open: boolean) => {
-    if (open) {
-      if (openMenuOwner !== null && openMenuOwner !== 'master') closeOpenMenu()
-      openMenuOwner = 'master'
-    } else if (openMenuOwner === 'master') {
-      openMenuOwner = null
-    }
-    setMasterPanelExpanded(open)
+  ipcMain.handle('open-master-settings-window', () => {
+    createMasterModalWindow()
   })
 
   ipcMain.handle('set-card-scale', (_e, scale: number) => {
@@ -233,11 +219,12 @@ export function registerIpcHandlers(): void {
 
     const masterWin = getMasterSettingsWindow()
     if (masterWin && !masterWin.isDestroyed()) {
-      // Keep whatever height it currently has (collapsed or expanded — the
-      // user is very likely mid-interaction with this panel's own slider
-      // when card scale changes) and only reposition/rewiden it in place.
-      const currentHeight = masterWin.getSize()[1]
-      masterWin.setBounds({ x: layout.x, y: layout.masterY, width: layout.cardWidth, height: currentHeight })
+      masterWin.setBounds({
+        x: layout.x,
+        y: layout.masterY,
+        width: layout.cardWidth,
+        height: layout.buttonHeight
+      })
       applyRoundedShape(masterWin, 14)
     }
 

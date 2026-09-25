@@ -22,6 +22,15 @@ export function ClockWidget({
 }: ClockWidgetProps): JSX.Element {
   const effective = getEffectiveSettings(clockState, global)
   const { time, date } = useClock(definition.timezone, effective.use12Hour, effective.showSeconds)
+  // Resolved directly from the theme prop (reactive) rather than reading
+  // document.documentElement.dataset.theme (a DOM attribute this same app
+  // wrote elsewhere) — reading our own prior DOM mutation during render
+  // isn't reactive to it changing, so the card would only pick up a new
+  // theme whenever it happened to re-render for some unrelated reason
+  // (e.g. the next ~30s clock tick), not immediately.
+  const isDark =
+    global.theme === 'dark' ||
+    (global.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const [menuOpen, setMenuOpen] = useState(false)
   // Captured window height right before the menu opens, so the card keeps
   // its normal size while the window grows beneath it for the menu, instead
@@ -66,7 +75,7 @@ export function ClockWidget({
       <div
         className="clock-widget"
         style={{
-          backgroundImage: glassGradient(document.documentElement.dataset.theme !== 'light', effective.opacity),
+          backgroundImage: glassGradient(isDark, effective.opacity),
           ...(cardHeight ? { height: `${cardHeight}px` } : {})
         }}
       >

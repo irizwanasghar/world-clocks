@@ -30,6 +30,7 @@ export function createClockWindow(id: ClockId): BrowserWindow {
     show: false,
     hasShadow: false,
     roundedCorners: true,
+    thickFrame: false,
     minWidth: 160,
     minHeight: 76,
     webPreferences: {

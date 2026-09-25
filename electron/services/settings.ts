@@ -18,12 +18,13 @@ const DEFAULT_GLOBAL: GlobalSettings = {
 const DEFAULT_WIDTH = 220
 const DEFAULT_HEIGHT = 100
 const MARGIN = 14
+const RIGHT_MARGIN = 44
 
 /** Stacks widgets vertically along the right edge of the primary display's work area. */
 function defaultPositionFor(index: number): { x: number; y: number } {
   const display = screen.getPrimaryDisplay()
   const { x: wx, y: wy, width, height } = display.workArea
-  const x = wx + width - DEFAULT_WIDTH - MARGIN
+  const x = wx + width - DEFAULT_WIDTH - RIGHT_MARGIN
   const totalHeight = CLOCK_DEFINITIONS.length * DEFAULT_HEIGHT + (CLOCK_DEFINITIONS.length - 1) * MARGIN
   const startY = wy + Math.max(MARGIN, (height - totalHeight) / 2)
   const y = startY + index * (DEFAULT_HEIGHT + MARGIN)

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { AppSettings, ClockId, GlobalSettings, Theme } from '../types'
 import { CLOCK_DEFINITIONS } from '../data/timezones'
 import { Toggle } from './Toggle'
+import { FlagIcon } from './FlagIcon'
 
 export function ClockSettings(): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null)
@@ -43,7 +44,11 @@ export function ClockSettings(): JSX.Element | null {
         {CLOCK_DEFINITIONS.map((def) => (
           <Toggle
             key={def.id}
-            label={`${def.flagEmoji} ${def.label} — ${def.city}`}
+            label={
+              <>
+                <FlagIcon countryCode={def.countryCode} size={13} /> {def.label} — {def.city}
+              </>
+            }
             checked={settings.clocks[def.id].enabled}
             onChange={(checked) => toggleClock(def.id, checked)}
           />

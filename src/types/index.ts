@@ -14,7 +14,7 @@ export interface ClockDefinition {
   label: string
   city: string
   timezone: string
-  flagEmoji: string
+  countryCode: 'US' | 'PK'
   /** Reserved for v2 business-hours indicator. */
   businessHours?: BusinessHours
 }

@@ -53,7 +53,7 @@ export function refreshTrayMenu(): void {
   const settings = settingsStore.getAll()
 
   const clockItems = CLOCK_DEFINITIONS.map((def) => ({
-    label: `${def.flagEmoji} ${def.label}`,
+    label: `${def.countryCode} — ${def.label}`,
     type: 'checkbox' as const,
     checked: settings.clocks[def.id].enabled,
     click: () => {

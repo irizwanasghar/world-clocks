@@ -15,9 +15,9 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   launchAtStartup: false
 }
 
-const DEFAULT_WIDTH = 280
-const DEFAULT_HEIGHT = 130
-const MARGIN = 16
+const DEFAULT_WIDTH = 220
+const DEFAULT_HEIGHT = 100
+const MARGIN = 14
 
 /** Stacks widgets vertically along the right edge of the primary display's work area. */
 function defaultPositionFor(index: number): { x: number; y: number } {

@@ -6,35 +6,35 @@ export const CLOCK_DEFINITIONS: ClockDefinition[] = [
     label: 'Eastern Time',
     city: 'New York, NY',
     timezone: 'America/New_York',
-    flagEmoji: '🇺🇸'
+    countryCode: 'US'
   },
   {
     id: 'central',
     label: 'Central Time',
     city: 'Chicago, IL',
     timezone: 'America/Chicago',
-    flagEmoji: '🇺🇸'
+    countryCode: 'US'
   },
   {
     id: 'mountain',
     label: 'Mountain Time',
     city: 'Denver, CO',
     timezone: 'America/Denver',
-    flagEmoji: '🇺🇸'
+    countryCode: 'US'
   },
   {
     id: 'pacific',
     label: 'Pacific Time',
     city: 'Los Angeles, CA',
     timezone: 'America/Los_Angeles',
-    flagEmoji: '🇺🇸'
+    countryCode: 'US'
   },
   {
     id: 'pakistan',
     label: 'Pakistan Time',
     city: 'Karachi',
     timezone: 'Asia/Karachi',
-    flagEmoji: '🇵🇰'
+    countryCode: 'PK'
   }
 ]
 

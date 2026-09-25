@@ -28,8 +28,8 @@ export function createClockWindow(id: ClockId): BrowserWindow {
     resizable: true,
     show: false,
     hasShadow: false,
-    minWidth: 200,
-    minHeight: 100,
+    minWidth: 160,
+    minHeight: 76,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,

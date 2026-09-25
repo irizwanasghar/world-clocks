@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ClockDefinition, ClockId, GlobalSettings } from '../types'
 import { useClock } from '../hooks/useClock'
+import { FlagIcon } from './FlagIcon'
 
 interface ClockWidgetProps {
   definition: ClockDefinition
@@ -37,7 +38,7 @@ export function ClockWidget({ definition, global, onUpdateGlobal, onHide }: Cloc
         </button>
 
         <div className="clock-header">
-          <span className="flag">{definition.flagEmoji}</span> {definition.label}
+          <FlagIcon countryCode={definition.countryCode} /> {definition.label}
         </div>
         <div className="clock-city">{definition.city}</div>
         <div className="clock-time">{time}</div>

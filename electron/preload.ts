@@ -24,6 +24,7 @@ const api: DesktopAPI = {
   setClockMenuOpen: (id: ClockId, open: boolean) => ipcRenderer.invoke('set-clock-menu-open', id, open),
   setMasterMenuOpen: (open: boolean) => ipcRenderer.invoke('set-master-menu-open', open),
   setCardScale: (scale: number) => ipcRenderer.invoke('set-card-scale', scale),
+  setDockSide: (side: 'left' | 'right') => ipcRenderer.invoke('set-dock-side', side),
   onSettingsChanged: (callback: (settings: AppSettings) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
       callback(settings)
@@ -34,6 +35,11 @@ const api: DesktopAPI = {
     const listener = (): void => callback()
     ipcRenderer.on('master-panel-collapsed', listener)
     return () => ipcRenderer.removeListener('master-panel-collapsed', listener)
+  },
+  onClockMenuClosed: (callback: () => void) => {
+    const listener = (): void => callback()
+    ipcRenderer.on('clock-menu-closed', listener)
+    return () => ipcRenderer.removeListener('clock-menu-closed', listener)
   }
 }
 

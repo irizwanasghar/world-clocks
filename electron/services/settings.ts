@@ -20,7 +20,8 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   opacity: 0.9,
   theme: 'dark',
   launchAtStartup: false,
-  cardScale: 1
+  cardScale: 1,
+  dockSide: 'right'
 }
 
 export const MIN_CARD_SCALE = 0.75
@@ -35,7 +36,7 @@ export const STATES_BUTTON_HEIGHT = 54
  *  state — this is what the layout stacks around. Expanding it grows the
  *  window downward without affecting the other widgets' positions. */
 export const MASTER_COLLAPSED_HEIGHT = STATES_BUTTON_HEIGHT
-export const MASTER_DEFAULT_EXPANDED_HEIGHT = 250
+export const MASTER_DEFAULT_EXPANDED_HEIGHT = 310
 
 const DEFAULT_MASTER_PANEL: MasterPanelState = {
   width: DEFAULT_WIDTH,
@@ -53,16 +54,24 @@ const MASTER_ROW = 0
 const FIRST_CLOCK_ROW = 1
 const STATES_BUTTON_ROW = ROW_HEIGHTS.length - 1
 
+type DockSide = 'left' | 'right'
+
+function dockX(side: DockSide, workArea: Electron.Rectangle, width: number): number {
+  return side === 'right'
+    ? workArea.x + workArea.width - width - RIGHT_MARGIN
+    : workArea.x + RIGHT_MARGIN
+}
+
 /** Stacks all widgets (master panel, clock cards, states button) as one
- *  vertical group along the right edge of the primary display's work area,
+ *  vertical group along the given edge of the primary display's work area,
  *  so the whole group is centered/clamped together — the master panel can
  *  never end up pushed off the top of the screen on its own. */
-function defaultPositionForRow(row: number): { x: number; y: number } {
+function defaultPositionForRow(row: number, side: DockSide = 'right'): { x: number; y: number } {
   const display = screen.getPrimaryDisplay()
-  const { x: wx, y: wy, width, height } = display.workArea
-  const x = wx + width - DEFAULT_WIDTH - RIGHT_MARGIN
+  const { workArea } = display
+  const x = dockX(side, workArea, DEFAULT_WIDTH)
   const totalHeight = ROW_HEIGHTS.reduce((sum, h) => sum + h, 0) + (ROW_HEIGHTS.length - 1) * MARGIN
-  const startY = wy + Math.max(MARGIN, (height - totalHeight) / 2)
+  const startY = workArea.y + Math.max(MARGIN, (workArea.height - totalHeight) / 2)
   let y = startY
   for (let i = 0; i < row; i++) {
     y += ROW_HEIGHTS[i] + MARGIN
@@ -70,16 +79,16 @@ function defaultPositionForRow(row: number): { x: number; y: number } {
   return { x, y }
 }
 
-function defaultPositionFor(clockIndex: number): { x: number; y: number } {
-  return defaultPositionForRow(FIRST_CLOCK_ROW + clockIndex)
+function defaultPositionFor(clockIndex: number, side: DockSide = 'right'): { x: number; y: number } {
+  return defaultPositionForRow(FIRST_CLOCK_ROW + clockIndex, side)
 }
 
-export function defaultStatesButtonPosition(): { x: number; y: number } {
-  return defaultPositionForRow(STATES_BUTTON_ROW)
+export function defaultStatesButtonPosition(side: DockSide = 'right'): { x: number; y: number } {
+  return defaultPositionForRow(STATES_BUTTON_ROW, side)
 }
 
-export function defaultMasterSettingsPosition(): { x: number; y: number } {
-  return defaultPositionForRow(MASTER_ROW)
+export function defaultMasterSettingsPosition(side: DockSide = 'right'): { x: number; y: number } {
+  return defaultPositionForRow(MASTER_ROW, side)
 }
 
 export interface ScaledLayout {
@@ -95,17 +104,17 @@ export interface ScaledLayout {
 /** Same vertical-stack layout as defaultPositionForRow, but computed for an
  *  arbitrary card size scale — used when the user resizes every widget at
  *  once from the master settings panel. */
-export function getScaledLayout(scale: number): ScaledLayout {
+export function getScaledLayout(scale: number, side: DockSide = 'right'): ScaledLayout {
   const cardWidth = Math.round(DEFAULT_WIDTH * scale)
   const cardHeight = Math.round(DEFAULT_HEIGHT * scale)
   const buttonHeight = Math.round(STATES_BUTTON_HEIGHT * scale)
   const rowHeights = [buttonHeight, ...CLOCK_DEFINITIONS.map(() => cardHeight), buttonHeight]
 
   const display = screen.getPrimaryDisplay()
-  const { x: wx, y: wy, width, height } = display.workArea
-  const x = wx + width - cardWidth - RIGHT_MARGIN
+  const { workArea } = display
+  const x = dockX(side, workArea, cardWidth)
   const totalHeight = rowHeights.reduce((sum, h) => sum + h, 0) + (rowHeights.length - 1) * MARGIN
-  const startY = wy + Math.max(MARGIN, (height - totalHeight) / 2)
+  const startY = workArea.y + Math.max(MARGIN, (workArea.height - totalHeight) / 2)
 
   const rowY = (row: number): number => {
     let y = startY
@@ -235,7 +244,7 @@ class SettingsStore {
         )
       })
       if (!withinDisplay) {
-        const { x, y } = defaultPositionFor(i)
+        const { x, y } = defaultPositionFor(i, this.settings.global.dockSide)
         this.settings.clocks[def.id] = { ...state, x, y }
       }
     })
@@ -285,8 +294,9 @@ class SettingsStore {
   }
 
   resetPositions(): AppSettings {
+    const side = this.settings.global.dockSide
     CLOCK_DEFINITIONS.forEach((def, i) => {
-      const { x, y } = defaultPositionFor(i)
+      const { x, y } = defaultPositionFor(i, side)
       this.settings.clocks[def.id] = {
         ...this.settings.clocks[def.id],
         x,
@@ -306,7 +316,7 @@ class SettingsStore {
    *  laid out consistently at the new size. */
   applyCardScale(scale: number): AppSettings {
     const clamped = Math.min(MAX_CARD_SCALE, Math.max(MIN_CARD_SCALE, scale))
-    const layout = getScaledLayout(clamped)
+    const layout = getScaledLayout(clamped, this.settings.global.dockSide)
     CLOCK_DEFINITIONS.forEach((def, i) => {
       this.settings.clocks[def.id] = {
         ...this.settings.clocks[def.id],
@@ -321,6 +331,22 @@ class SettingsStore {
       height: Math.round(MASTER_DEFAULT_EXPANDED_HEIGHT * clamped)
     }
     this.settings.global = { ...this.settings.global, cardScale: clamped }
+    persist(this.settings)
+    return this.settings
+  }
+
+  /** Repositions every widget onto the other edge of the screen, keeping
+   *  each one's current size. */
+  applyDockSide(side: 'left' | 'right'): AppSettings {
+    const layout = getScaledLayout(this.settings.global.cardScale, side)
+    CLOCK_DEFINITIONS.forEach((def, i) => {
+      this.settings.clocks[def.id] = {
+        ...this.settings.clocks[def.id],
+        x: layout.x,
+        y: layout.clockY(i)
+      }
+    })
+    this.settings.global = { ...this.settings.global, dockSide: side }
     persist(this.settings)
     return this.settings
   }
@@ -345,7 +371,8 @@ export const settingsStore = {
   updateMasterPanel: (partial: Partial<MasterPanelState>): AppSettings =>
     getInstance().updateMasterPanel(partial),
   resetPositions: (): AppSettings => getInstance().resetPositions(),
-  applyCardScale: (scale: number): AppSettings => getInstance().applyCardScale(scale)
+  applyCardScale: (scale: number): AppSettings => getInstance().applyCardScale(scale),
+  applyDockSide: (side: 'left' | 'right'): AppSettings => getInstance().applyDockSide(side)
 }
 
 function getInstance(): SettingsStore {

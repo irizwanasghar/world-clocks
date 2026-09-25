@@ -52,6 +52,8 @@ export interface GlobalSettings {
   /** Size multiplier applied to every widget (clock cards, states button,
    *  master panel) when resized all at once from the master settings panel. */
   cardScale: number
+  /** Which edge of the primary display the widget stack docks to. */
+  dockSide: 'left' | 'right'
 }
 
 export interface EffectiveClockSettings {
@@ -92,8 +94,10 @@ export interface DesktopAPI {
   setClockMenuOpen: (id: ClockId, open: boolean) => Promise<void>
   setMasterMenuOpen: (open: boolean) => Promise<void>
   setCardScale: (scale: number) => Promise<AppSettings>
+  setDockSide: (side: 'left' | 'right') => Promise<AppSettings>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
   onMasterPanelCollapsed: (callback: () => void) => () => void
+  onClockMenuClosed: (callback: () => void) => () => void
 }
 
 declare global {

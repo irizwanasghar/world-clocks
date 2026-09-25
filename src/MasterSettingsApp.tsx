@@ -5,6 +5,10 @@ import { Toggle } from './components/Toggle'
 export function MasterSettingsApp(): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [open, setOpen] = useState(false)
+  // Local, instantly-updating copy of the size slider's value: the actual
+  // resize (which moves every widget window) only commits on release, so
+  // dragging doesn't spam window moves and cause visible jitter mid-drag.
+  const [liveScale, setLiveScale] = useState<number | null>(null)
 
   useEffect(() => {
     window.desktopAPI.getSettings().then(setSettings)
@@ -38,7 +42,8 @@ export function MasterSettingsApp(): JSX.Element | null {
     window.desktopAPI.saveGlobalSettings(partial).then(setSettings)
   }
 
-  const updateCardScale = (scale: number): void => {
+  const commitScale = (scale: number): void => {
+    setLiveScale(null)
     window.desktopAPI.setCardScale(scale).then(setSettings)
   }
 
@@ -49,6 +54,8 @@ export function MasterSettingsApp(): JSX.Element | null {
   }
 
   const g = settings.global
+  const displayScale = liveScale ?? g.cardScale
+  const isDark = g.theme === 'dark' || (g.theme === 'system' && document.documentElement.dataset.theme === 'dark')
 
   if (!open) {
     return (
@@ -76,6 +83,12 @@ export function MasterSettingsApp(): JSX.Element | null {
         <Toggle label="Show seconds" checked={g.showSeconds} onChange={(v) => updateGlobal({ showSeconds: v })} />
         <Toggle label="12-hour format" checked={g.use12Hour} onChange={(v) => updateGlobal({ use12Hour: v })} />
         <Toggle label="Always on top" checked={g.alwaysOnTop} onChange={(v) => updateGlobal({ alwaysOnTop: v })} />
+        <Toggle label="Dark theme" checked={isDark} onChange={(v) => updateGlobal({ theme: v ? 'dark' : 'light' })} />
+        <Toggle
+          label="Dock on right"
+          checked={g.dockSide === 'right'}
+          onChange={(v) => window.desktopAPI.setDockSide(v ? 'right' : 'left').then(setSettings)}
+        />
 
         <div className="master-opacity-row">
           <span>Opacity</span>
@@ -93,7 +106,7 @@ export function MasterSettingsApp(): JSX.Element | null {
 
         <div className="master-opacity-row">
           <span>Widget Size</span>
-          <span className="master-opacity-value">{Math.round(g.cardScale * 100)}%</span>
+          <span className="master-opacity-value">{Math.round(displayScale * 100)}%</span>
         </div>
         <input
           className="master-opacity-slider"
@@ -101,8 +114,11 @@ export function MasterSettingsApp(): JSX.Element | null {
           min={0.75}
           max={1.6}
           step={0.05}
-          value={g.cardScale}
-          onChange={(e) => updateCardScale(Number(e.target.value))}
+          value={displayScale}
+          onChange={(e) => setLiveScale(Number(e.target.value))}
+          onMouseUp={(e) => commitScale(Number((e.target as HTMLInputElement).value))}
+          onTouchEnd={(e) => commitScale(Number((e.target as HTMLInputElement).value))}
+          onKeyUp={(e) => commitScale(Number((e.target as HTMLInputElement).value))}
         />
         <div className="master-panel-hint">Resizes every card and both buttons together</div>
 

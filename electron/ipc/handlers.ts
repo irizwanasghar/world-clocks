@@ -35,6 +35,26 @@ function broadcastSettings(): void {
   refreshTrayMenu()
 }
 
+// Only one gear menu / the master panel can be open at a time. Each widget
+// is its own BrowserWindow with no shared renderer state, so the main
+// process is the only place that can know "something else is open" and
+// close it — tracked here.
+let openMenuOwner: ClockId | 'master' | null = null
+
+function closeOpenMenu(): void {
+  if (openMenuOwner === null) return
+  if (openMenuOwner === 'master') {
+    setMasterPanelExpanded(false)
+    const masterWin = getMasterSettingsWindow()
+    if (masterWin && !masterWin.isDestroyed()) masterWin.webContents.send('master-panel-collapsed')
+  } else {
+    setClockMenuExpanded(openMenuOwner, false)
+    const win = getClockWindow(openMenuOwner)
+    if (win && !win.isDestroyed()) win.webContents.send('clock-menu-closed')
+  }
+  openMenuOwner = null
+}
+
 function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
   getAllClockWindows().forEach((win) => {
     if (!win.isDestroyed()) win.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
@@ -125,6 +145,7 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('reset-positions', () => {
+    openMenuOwner = null
     const settings = settingsStore.resetPositions()
     getAllClockWindows().forEach((win, id) => {
       if (win.isDestroyed()) return
@@ -133,13 +154,13 @@ export function registerIpcHandlers(): void {
     })
     const statesButtonWin = getStatesButtonWindow()
     if (statesButtonWin && !statesButtonWin.isDestroyed()) {
-      const { x, y } = defaultStatesButtonPosition()
+      const { x, y } = defaultStatesButtonPosition(settings.global.dockSide)
       statesButtonWin.setBounds({ x, y, width: DEFAULT_WIDTH, height: STATES_BUTTON_HEIGHT })
       applyRoundedShape(statesButtonWin, 14)
     }
     const masterWin = getMasterSettingsWindow()
     if (masterWin && !masterWin.isDestroyed()) {
-      const { x, y } = defaultMasterSettingsPosition()
+      const { x, y } = defaultMasterSettingsPosition(settings.global.dockSide)
       setMasterPanelExpanded(false)
       masterWin.setBounds({ x, y, width: DEFAULT_WIDTH, height: MASTER_COLLAPSED_HEIGHT })
       masterWin.webContents.send('master-panel-collapsed')
@@ -169,16 +190,28 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('set-clock-menu-open', (_e, id: ClockId, open: boolean) => {
+    if (open) {
+      if (openMenuOwner !== null && openMenuOwner !== id) closeOpenMenu()
+      openMenuOwner = id
+    } else if (openMenuOwner === id) {
+      openMenuOwner = null
+    }
     setClockMenuExpanded(id, open)
   })
 
   ipcMain.handle('set-master-menu-open', (_e, open: boolean) => {
+    if (open) {
+      if (openMenuOwner !== null && openMenuOwner !== 'master') closeOpenMenu()
+      openMenuOwner = 'master'
+    } else if (openMenuOwner === 'master') {
+      openMenuOwner = null
+    }
     setMasterPanelExpanded(open)
   })
 
   ipcMain.handle('set-card-scale', (_e, scale: number) => {
     const settings = settingsStore.applyCardScale(scale)
-    const layout = getScaledLayout(settings.global.cardScale)
+    const layout = getScaledLayout(settings.global.cardScale, settings.global.dockSide)
 
     getAllClockWindows().forEach((win, id) => {
       if (win.isDestroyed()) return
@@ -206,6 +239,31 @@ export function registerIpcHandlers(): void {
       const currentHeight = masterWin.getSize()[1]
       masterWin.setBounds({ x: layout.x, y: layout.masterY, width: layout.cardWidth, height: currentHeight })
       applyRoundedShape(masterWin, 14)
+    }
+
+    broadcastSettings()
+    return settings
+  })
+
+  ipcMain.handle('set-dock-side', (_e, side: 'left' | 'right') => {
+    const settings = settingsStore.applyDockSide(side)
+    const layout = getScaledLayout(settings.global.cardScale, settings.global.dockSide)
+
+    getAllClockWindows().forEach((win, id) => {
+      if (win.isDestroyed()) return
+      const state = settingsStore.getClock(id)
+      win.setPosition(state.x, state.y)
+      applyRoundedShape(win)
+    })
+
+    const statesButtonWin = getStatesButtonWindow()
+    if (statesButtonWin && !statesButtonWin.isDestroyed()) {
+      statesButtonWin.setPosition(layout.x, layout.statesButtonY)
+    }
+
+    const masterWin = getMasterSettingsWindow()
+    if (masterWin && !masterWin.isDestroyed()) {
+      masterWin.setPosition(layout.x, layout.masterY)
     }
 
     broadcastSettings()

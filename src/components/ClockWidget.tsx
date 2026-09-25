@@ -3,6 +3,7 @@ import type { ClockDefinition, ClockId, ClockState, GlobalSettings } from '../ty
 import { useClock } from '../hooks/useClock'
 import { FlagIcon } from './FlagIcon'
 import { getEffectiveSettings } from '../data/effectiveSettings'
+import { glassGradient } from '../data/glassBackground'
 
 interface ClockWidgetProps {
   definition: ClockDefinition
@@ -50,12 +51,22 @@ export function ClockWidget({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuOpen])
 
+  useEffect(() => {
+    // Main process closes this menu (without re-notifying it, to avoid a
+    // loop) whenever another card's menu or the master panel opens.
+    const unsubscribe = window.desktopAPI.onClockMenuClosed(() => {
+      setMenuOpen(false)
+      setCardHeight(null)
+    })
+    return unsubscribe
+  }, [])
+
   return (
     <div className="clock-widget-outer">
       <div
         className="clock-widget"
         style={{
-          ['--glass-alpha' as string]: String(effective.opacity),
+          backgroundImage: glassGradient(document.documentElement.dataset.theme !== 'light', effective.opacity),
           ...(cardHeight ? { height: `${cardHeight}px` } : {})
         }}
       >

@@ -233,7 +233,13 @@ body,
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  /* The host window is exactly this button's size, hard-clipped to a
+     circle at that same boundary (BrowserWindow.setShape) — there's no
+     room outside the circle for a normal outer box-shadow to render into,
+     so it would always get abruptly cut off at the edge instead of fading
+     out, looking like a jagged dark smear rather than a soft shadow. An
+     inset shadow stays entirely within the clipped bounds. */
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.35);
   transition: color 0.15s ease, box-shadow 0.15s ease;
 }
 

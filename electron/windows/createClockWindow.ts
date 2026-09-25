@@ -63,16 +63,51 @@ export function createClockWindow(id: ClockId): BrowserWindow {
   win.setAlwaysOnTop(effectiveAlwaysOnTop, 'screen-saver')
 
   const query = `?clockId=${id}`
-  if (windowIsDev()) {
-    win.loadURL(`${process.env.ELECTRON_RENDERER_URL}/src/clock.html${query}`)
-  } else {
-    win.loadFile(join(__dirname, '../renderer/src/clock.html'), { search: query.slice(1) })
+  const load = (): void => {
+    if (windowIsDev()) {
+      win.loadURL(`${process.env.ELECTRON_RENDERER_URL}/src/clock.html${query}`)
+    } else {
+      win.loadFile(join(__dirname, '../renderer/src/clock.html'), { search: query.slice(1) })
+    }
   }
+  load()
 
+  // With 5 clock cards + 4 buttons all creating their own BrowserWindow at
+  // startup, an individual window's renderer can occasionally fail to load
+  // or crash outright under resource contention — silently, with no error
+  // surfaced anywhere, leaving that one card permanently blank while every
+  // other widget is fine. Recovering automatically (reload on load failure,
+  // full recreate-and-reload on a renderer crash) means a single widget's
+  // bad luck on any given launch doesn't require the user to notice,
+  // diagnose, and manually restart the whole app.
+  win.webContents.on('did-fail-load', (_e, errorCode) => {
+    if (win.isDestroyed()) return
+    if (errorCode === -3) return // ERR_ABORTED — usually a benign cancelled navigation
+    load()
+  })
+  win.webContents.on('render-process-gone', (_e, details) => {
+    if (win.isDestroyed() || details.reason === 'clean-exit') return
+    load()
+  })
+
+  let shown = false
   win.once('ready-to-show', () => {
+    shown = true
     applyRoundedShape(win)
     if (state.visible && state.enabled) win.show()
   })
+  // Safety net: if content never finishes loading (and 'ready-to-show'
+  // never fires as a result), the window would otherwise stay invisible
+  // forever with nothing to prompt a retry. Showing it anyway after a
+  // generous timeout at least surfaces *something* instead of a silently
+  // missing card, and any in-flight did-fail-load retry above will still
+  // reload it properly once the underlying issue clears.
+  setTimeout(() => {
+    if (!shown && !win.isDestroyed() && state.visible && state.enabled) {
+      applyRoundedShape(win)
+      win.show()
+    }
+  }, 4000)
 
   let saveTimer: NodeJS.Timeout | null = null
   const scheduleSave = () => {

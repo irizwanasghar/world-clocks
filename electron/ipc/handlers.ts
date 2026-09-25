@@ -357,8 +357,10 @@ export function registerIpcHandlers(): void {
     getAllClockWindows().forEach((win, id) => {
       if (win.isDestroyed()) return
       const state = settingsStore.getClock(id)
+      // Only x/y change here, not size, so the window's clip shape (which
+      // depends solely on width/height) doesn't need reapplying — doing so
+      // anyway was a redundant setShape call on every dock-side switch.
       win.setPosition(state.x, state.y)
-      applyRoundedShape(win)
     })
 
     const statesButtonWin = getStatesButtonWindow()

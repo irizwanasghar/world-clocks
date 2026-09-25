@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import type { AppSettings, ClockId, ClockState } from './types'
+import { useEffect } from 'react'
+import type { ClockId, ClockState } from './types'
 import { CLOCK_MAP } from './data/timezones'
 import { ClockWidget } from './components/ClockWidget'
+import { useAppSettings } from './hooks/useAppSettings'
 
 function getClockIdFromQuery(): ClockId | null {
   const params = new URLSearchParams(window.location.search)
@@ -11,13 +12,7 @@ function getClockIdFromQuery(): ClockId | null {
 
 export function ClockApp(): JSX.Element | null {
   const clockId = getClockIdFromQuery()
-  const [settings, setSettings] = useState<AppSettings | null>(null)
-
-  useEffect(() => {
-    window.desktopAPI.getSettings().then(setSettings)
-    const unsubscribe = window.desktopAPI.onSettingsChanged(setSettings)
-    return unsubscribe
-  }, [])
+  const settings = useAppSettings()
 
   useEffect(() => {
     if (!settings) return
@@ -37,7 +32,10 @@ export function ClockApp(): JSX.Element | null {
   const clockState = settings.clocks[clockId]
 
   const onUpdateClock = (partial: Partial<ClockState>): void => {
-    window.desktopAPI.saveClockState(clockId, partial).then(setSettings)
+    // No need to chain the response into local state — the main process
+    // broadcasts settings-changed to every window after a save, which
+    // useAppSettings is already subscribed to.
+    window.desktopAPI.saveClockState(clockId, partial)
   }
 
   const onHide = (id: ClockId): void => {

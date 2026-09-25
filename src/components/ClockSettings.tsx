@@ -1,17 +1,12 @@
-import { useEffect, useState } from 'react'
-import type { AppSettings, ClockId, GlobalSettings, Theme } from '../types'
+import { useEffect } from 'react'
+import type { ClockId, GlobalSettings, Theme } from '../types'
 import { CLOCK_DEFINITIONS } from '../data/timezones'
 import { Toggle } from './Toggle'
 import { FlagIcon } from './FlagIcon'
+import { useAppSettings } from '../hooks/useAppSettings'
 
 export function ClockSettings(): JSX.Element | null {
-  const [settings, setSettings] = useState<AppSettings | null>(null)
-
-  useEffect(() => {
-    window.desktopAPI.getSettings().then(setSettings)
-    const unsubscribe = window.desktopAPI.onSettingsChanged(setSettings)
-    return unsubscribe
-  }, [])
+  const settings = useAppSettings()
 
   useEffect(() => {
     if (!settings) return
@@ -28,11 +23,11 @@ export function ClockSettings(): JSX.Element | null {
   if (!settings) return <div className="settings-loading">Loading…</div>
 
   const updateGlobal = (partial: Partial<GlobalSettings>): void => {
-    window.desktopAPI.saveGlobalSettings(partial).then(setSettings)
+    window.desktopAPI.saveGlobalSettings(partial)
   }
 
   const toggleClock = (id: ClockId, enabled: boolean): void => {
-    window.desktopAPI.toggleClockEnabled(id, enabled).then(setSettings)
+    window.desktopAPI.toggleClockEnabled(id, enabled)
   }
 
   return (
@@ -112,10 +107,7 @@ export function ClockSettings(): JSX.Element | null {
         <button className="btn" onClick={() => window.desktopAPI.hideAll()}>
           Hide All
         </button>
-        <button
-          className="btn"
-          onClick={() => window.desktopAPI.resetPositions().then(setSettings)}
-        >
+        <button className="btn" onClick={() => window.desktopAPI.resetPositions()}>
           Reset Positions &amp; Size
         </button>
       </section>

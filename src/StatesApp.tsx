@@ -1,15 +1,9 @@
-import { useEffect, useState } from 'react'
-import type { AppSettings } from './types'
+import { useEffect } from 'react'
 import { StatesList } from './components/StatesList'
+import { useAppSettings } from './hooks/useAppSettings'
 
 export function StatesApp(): JSX.Element | null {
-  const [settings, setSettings] = useState<AppSettings | null>(null)
-
-  useEffect(() => {
-    window.desktopAPI.getSettings().then(setSettings)
-    const unsubscribe = window.desktopAPI.onSettingsChanged(setSettings)
-    return unsubscribe
-  }, [])
+  const settings = useAppSettings()
 
   useEffect(() => {
     if (!settings) return

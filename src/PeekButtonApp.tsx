@@ -1,14 +1,7 @@
-import { useEffect, useState } from 'react'
-import type { AppSettings } from './types'
+import { useAppSettings } from './hooks/useAppSettings'
 
 export function PeekButtonApp(): JSX.Element | null {
-  const [settings, setSettings] = useState<AppSettings | null>(null)
-
-  useEffect(() => {
-    window.desktopAPI.getSettings().then(setSettings)
-    const unsubscribe = window.desktopAPI.onSettingsChanged(setSettings)
-    return unsubscribe
-  }, [])
+  const settings = useAppSettings()
 
   if (!settings) return null
 
@@ -24,7 +17,7 @@ export function PeekButtonApp(): JSX.Element | null {
         className="peek-toggle-btn"
         aria-label={label}
         title={label}
-        onClick={() => window.desktopAPI.toggleGlobalPeek().then(setSettings)}
+        onClick={() => window.desktopAPI.toggleGlobalPeek()}
       >
         {pointsRight ? '›' : '‹'}
       </button>

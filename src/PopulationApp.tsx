@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
-import type { AppSettings, PopulationResult } from './types'
+import { useEffect, useRef, useState } from 'react'
+import type { PopulationResult } from './types'
 import { US_STATES } from './data/usStates'
+import { useAppSettings } from './hooks/useAppSettings'
 
 type Status = 'idle' | 'loading' | 'found' | 'not-found' | 'error' | 'missing-key'
 
 export function PopulationApp(): JSX.Element | null {
-  const [settings, setSettings] = useState<AppSettings | null>(null)
+  const settings = useAppSettings()
   const [city, setCity] = useState('')
   const [stateAbbr, setStateAbbr] = useState('CA')
   const [status, setStatus] = useState<Status>('idle')
@@ -14,14 +15,15 @@ export function PopulationApp(): JSX.Element | null {
   const [keyInput, setKeyInput] = useState('')
   const [keySaved, setKeySaved] = useState(false)
 
+  // keyInput should seed from settings once, the first time they arrive —
+  // not on every later settings-changed broadcast, which would stomp
+  // whatever the user is currently typing into the field.
+  const keyInputSeeded = useRef(false)
   useEffect(() => {
-    window.desktopAPI.getSettings().then((s) => {
-      setSettings(s)
-      setKeyInput(s.global.censusApiKey)
-    })
-    const unsubscribe = window.desktopAPI.onSettingsChanged(setSettings)
-    return unsubscribe
-  }, [])
+    if (!settings || keyInputSeeded.current) return
+    keyInputSeeded.current = true
+    setKeyInput(settings.global.censusApiKey)
+  }, [settings])
 
   useEffect(() => {
     if (!settings) return
@@ -59,8 +61,7 @@ export function PopulationApp(): JSX.Element | null {
   }
 
   const saveKey = async (): Promise<void> => {
-    const updated = await window.desktopAPI.saveGlobalSettings({ censusApiKey: keyInput.trim() })
-    setSettings(updated)
+    await window.desktopAPI.saveGlobalSettings({ censusApiKey: keyInput.trim() })
     setKeySaved(true)
     setTimeout(() => setKeySaved(false), 2000)
   }

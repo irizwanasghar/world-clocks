@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react'
-import type { AppSettings, GlobalSettings } from './types'
+import type { GlobalSettings } from './types'
 import { Toggle } from './components/Toggle'
+import { useAppSettings } from './hooks/useAppSettings'
 
 export function MasterModalApp(): JSX.Element | null {
-  const [settings, setSettings] = useState<AppSettings | null>(null)
+  const settings = useAppSettings()
   const [liveScale, setLiveScale] = useState<number | null>(null)
   const [version, setVersion] = useState('')
 
   useEffect(() => {
-    window.desktopAPI.getSettings().then(setSettings)
     window.desktopAPI.getAppVersion().then(setVersion)
-    const unsubscribe = window.desktopAPI.onSettingsChanged(setSettings)
-    return unsubscribe
   }, [])
 
   useEffect(() => {
@@ -29,12 +27,12 @@ export function MasterModalApp(): JSX.Element | null {
   if (!settings) return null
 
   const updateGlobal = (partial: Partial<GlobalSettings>): void => {
-    window.desktopAPI.saveGlobalSettings(partial).then(setSettings)
+    window.desktopAPI.saveGlobalSettings(partial)
   }
 
   const commitScale = (scale: number): void => {
     setLiveScale(null)
-    window.desktopAPI.setCardScale(scale).then(setSettings)
+    window.desktopAPI.setCardScale(scale)
   }
 
   const g = settings.global
@@ -59,7 +57,7 @@ export function MasterModalApp(): JSX.Element | null {
           <Toggle
             label="Dock on right"
             checked={g.dockSide === 'right'}
-            onChange={(v) => window.desktopAPI.setDockSide(v ? 'right' : 'left').then(setSettings)}
+            onChange={(v) => window.desktopAPI.setDockSide(v ? 'right' : 'left')}
           />
         </section>
 
@@ -94,7 +92,7 @@ export function MasterModalApp(): JSX.Element | null {
         </section>
 
         <section className="settings-section actions">
-          <button className="btn" onClick={() => window.desktopAPI.resetPositions().then(setSettings)}>
+          <button className="btn" onClick={() => window.desktopAPI.resetPositions()}>
             Reset Positions &amp; Size
           </button>
         </section>

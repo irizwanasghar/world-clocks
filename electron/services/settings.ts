@@ -19,8 +19,12 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   use12Hour: true,
   opacity: 0.9,
   theme: 'dark',
-  launchAtStartup: false
+  launchAtStartup: false,
+  cardScale: 1
 }
+
+export const MIN_CARD_SCALE = 0.75
+export const MAX_CARD_SCALE = 1.6
 
 export const DEFAULT_WIDTH = 236
 const DEFAULT_HEIGHT = 104
@@ -31,7 +35,7 @@ export const STATES_BUTTON_HEIGHT = 54
  *  state — this is what the layout stacks around. Expanding it grows the
  *  window downward without affecting the other widgets' positions. */
 export const MASTER_COLLAPSED_HEIGHT = STATES_BUTTON_HEIGHT
-export const MASTER_DEFAULT_EXPANDED_HEIGHT = 200
+export const MASTER_DEFAULT_EXPANDED_HEIGHT = 250
 
 const DEFAULT_MASTER_PANEL: MasterPanelState = {
   width: DEFAULT_WIDTH,
@@ -76,6 +80,48 @@ export function defaultStatesButtonPosition(): { x: number; y: number } {
 
 export function defaultMasterSettingsPosition(): { x: number; y: number } {
   return defaultPositionForRow(MASTER_ROW)
+}
+
+export interface ScaledLayout {
+  x: number
+  cardWidth: number
+  cardHeight: number
+  buttonHeight: number
+  masterY: number
+  clockY: (index: number) => number
+  statesButtonY: number
+}
+
+/** Same vertical-stack layout as defaultPositionForRow, but computed for an
+ *  arbitrary card size scale — used when the user resizes every widget at
+ *  once from the master settings panel. */
+export function getScaledLayout(scale: number): ScaledLayout {
+  const cardWidth = Math.round(DEFAULT_WIDTH * scale)
+  const cardHeight = Math.round(DEFAULT_HEIGHT * scale)
+  const buttonHeight = Math.round(STATES_BUTTON_HEIGHT * scale)
+  const rowHeights = [buttonHeight, ...CLOCK_DEFINITIONS.map(() => cardHeight), buttonHeight]
+
+  const display = screen.getPrimaryDisplay()
+  const { x: wx, y: wy, width, height } = display.workArea
+  const x = wx + width - cardWidth - RIGHT_MARGIN
+  const totalHeight = rowHeights.reduce((sum, h) => sum + h, 0) + (rowHeights.length - 1) * MARGIN
+  const startY = wy + Math.max(MARGIN, (height - totalHeight) / 2)
+
+  const rowY = (row: number): number => {
+    let y = startY
+    for (let i = 0; i < row; i++) y += rowHeights[i] + MARGIN
+    return y
+  }
+
+  return {
+    x,
+    cardWidth,
+    cardHeight,
+    buttonHeight,
+    masterY: rowY(0),
+    clockY: (index: number) => rowY(1 + index),
+    statesButtonY: rowY(rowHeights.length - 1)
+  }
 }
 
 function defaultClockState(index: number): ClockState {
@@ -250,6 +296,31 @@ class SettingsStore {
       }
     })
     this.settings.masterPanel = { ...DEFAULT_MASTER_PANEL }
+    this.settings.global = { ...this.settings.global, cardScale: 1 }
+    persist(this.settings)
+    return this.settings
+  }
+
+  /** Resizes and repositions every widget (all clock cards, the states
+   *  button, and the master panel) together, keeping the vertical stack
+   *  laid out consistently at the new size. */
+  applyCardScale(scale: number): AppSettings {
+    const clamped = Math.min(MAX_CARD_SCALE, Math.max(MIN_CARD_SCALE, scale))
+    const layout = getScaledLayout(clamped)
+    CLOCK_DEFINITIONS.forEach((def, i) => {
+      this.settings.clocks[def.id] = {
+        ...this.settings.clocks[def.id],
+        x: layout.x,
+        y: layout.clockY(i),
+        width: layout.cardWidth,
+        height: layout.cardHeight
+      }
+    })
+    this.settings.masterPanel = {
+      width: layout.cardWidth,
+      height: Math.round(MASTER_DEFAULT_EXPANDED_HEIGHT * clamped)
+    }
+    this.settings.global = { ...this.settings.global, cardScale: clamped }
     persist(this.settings)
     return this.settings
   }
@@ -273,7 +344,8 @@ export const settingsStore = {
   getMasterPanel: (): MasterPanelState => getInstance().getMasterPanel(),
   updateMasterPanel: (partial: Partial<MasterPanelState>): AppSettings =>
     getInstance().updateMasterPanel(partial),
-  resetPositions: (): AppSettings => getInstance().resetPositions()
+  resetPositions: (): AppSettings => getInstance().resetPositions(),
+  applyCardScale: (scale: number): AppSettings => getInstance().applyCardScale(scale)
 }
 
 function getInstance(): SettingsStore {

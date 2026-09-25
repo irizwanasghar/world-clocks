@@ -23,6 +23,7 @@ const api: DesktopAPI = {
   openStatesWindow: () => ipcRenderer.invoke('open-states-window'),
   setClockMenuOpen: (id: ClockId, open: boolean) => ipcRenderer.invoke('set-clock-menu-open', id, open),
   setMasterMenuOpen: (open: boolean) => ipcRenderer.invoke('set-master-menu-open', open),
+  setCardScale: (scale: number) => ipcRenderer.invoke('set-card-scale', scale),
   onSettingsChanged: (callback: (settings: AppSettings) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
       callback(settings)

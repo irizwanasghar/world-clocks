@@ -49,6 +49,9 @@ export interface GlobalSettings {
   opacity: number
   theme: Theme
   launchAtStartup: boolean
+  /** Size multiplier applied to every widget (clock cards, states button,
+   *  master panel) when resized all at once from the master settings panel. */
+  cardScale: number
 }
 
 export interface EffectiveClockSettings {
@@ -88,6 +91,7 @@ export interface DesktopAPI {
   openStatesWindow: () => Promise<void>
   setClockMenuOpen: (id: ClockId, open: boolean) => Promise<void>
   setMasterMenuOpen: (open: boolean) => Promise<void>
+  setCardScale: (scale: number) => Promise<AppSettings>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
   onMasterPanelCollapsed: (callback: () => void) => () => void
 }

@@ -1,6 +1,15 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import type { ClockId, ClockOverrides, ClockState, GlobalSettings } from '../../src/types'
-import { settingsStore, defaultStatesButtonPosition, defaultMasterSettingsPosition } from '../services/settings'
+import {
+  settingsStore,
+  defaultStatesButtonPosition,
+  defaultMasterSettingsPosition,
+  getScaledLayout,
+  DEFAULT_WIDTH,
+  STATES_BUTTON_HEIGHT,
+  MASTER_COLLAPSED_HEIGHT
+} from '../services/settings'
+import { applyRoundedShape } from '../services/windowShape'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 import {
   createClockWindow,
@@ -125,14 +134,16 @@ export function registerIpcHandlers(): void {
     const statesButtonWin = getStatesButtonWindow()
     if (statesButtonWin && !statesButtonWin.isDestroyed()) {
       const { x, y } = defaultStatesButtonPosition()
-      statesButtonWin.setPosition(x, y)
+      statesButtonWin.setBounds({ x, y, width: DEFAULT_WIDTH, height: STATES_BUTTON_HEIGHT })
+      applyRoundedShape(statesButtonWin, 14)
     }
     const masterWin = getMasterSettingsWindow()
     if (masterWin && !masterWin.isDestroyed()) {
       const { x, y } = defaultMasterSettingsPosition()
-      masterWin.setPosition(x, y)
       setMasterPanelExpanded(false)
+      masterWin.setBounds({ x, y, width: DEFAULT_WIDTH, height: MASTER_COLLAPSED_HEIGHT })
       masterWin.webContents.send('master-panel-collapsed')
+      applyRoundedShape(masterWin, 14)
     }
     broadcastSettings()
     return settings
@@ -163,6 +174,42 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('set-master-menu-open', (_e, open: boolean) => {
     setMasterPanelExpanded(open)
+  })
+
+  ipcMain.handle('set-card-scale', (_e, scale: number) => {
+    const settings = settingsStore.applyCardScale(scale)
+    const layout = getScaledLayout(settings.global.cardScale)
+
+    getAllClockWindows().forEach((win, id) => {
+      if (win.isDestroyed()) return
+      const state = settingsStore.getClock(id)
+      win.setBounds({ x: state.x, y: state.y, width: state.width, height: state.height })
+      applyRoundedShape(win)
+    })
+
+    const statesButtonWin = getStatesButtonWindow()
+    if (statesButtonWin && !statesButtonWin.isDestroyed()) {
+      statesButtonWin.setBounds({
+        x: layout.x,
+        y: layout.statesButtonY,
+        width: layout.cardWidth,
+        height: layout.buttonHeight
+      })
+      applyRoundedShape(statesButtonWin, 14)
+    }
+
+    const masterWin = getMasterSettingsWindow()
+    if (masterWin && !masterWin.isDestroyed()) {
+      // Keep whatever height it currently has (collapsed or expanded — the
+      // user is very likely mid-interaction with this panel's own slider
+      // when card scale changes) and only reposition/rewiden it in place.
+      const currentHeight = masterWin.getSize()[1]
+      masterWin.setBounds({ x: layout.x, y: layout.masterY, width: layout.cardWidth, height: currentHeight })
+      applyRoundedShape(masterWin, 14)
+    }
+
+    broadcastSettings()
+    return settings
   })
 
   ipcMain.handle('get-clock-id', (event) => {

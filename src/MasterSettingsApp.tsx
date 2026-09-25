@@ -38,6 +38,10 @@ export function MasterSettingsApp(): JSX.Element | null {
     window.desktopAPI.saveGlobalSettings(partial).then(setSettings)
   }
 
+  const updateCardScale = (scale: number): void => {
+    window.desktopAPI.setCardScale(scale).then(setSettings)
+  }
+
   const toggleOpen = (): void => {
     const next = !open
     setOpen(next)
@@ -86,6 +90,21 @@ export function MasterSettingsApp(): JSX.Element | null {
           value={g.opacity}
           onChange={(e) => updateGlobal({ opacity: Number(e.target.value) })}
         />
+
+        <div className="master-opacity-row">
+          <span>Widget Size</span>
+          <span className="master-opacity-value">{Math.round(g.cardScale * 100)}%</span>
+        </div>
+        <input
+          className="master-opacity-slider"
+          type="range"
+          min={0.75}
+          max={1.6}
+          step={0.05}
+          value={g.cardScale}
+          onChange={(e) => updateCardScale(Number(e.target.value))}
+        />
+        <div className="master-panel-hint">Resizes every card and both buttons together</div>
 
         <button
           className="master-reset-btn"

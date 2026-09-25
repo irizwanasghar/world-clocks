@@ -802,6 +802,13 @@ body,
   background: rgba(255, 255, 255, 0.18);
 }
 
+.master-panel-hint {
+  margin-top: 3px;
+  font-size: 9px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
 .master-reset-btn {
   -webkit-app-region: no-drag;
   margin-top: auto;

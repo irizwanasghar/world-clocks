@@ -249,6 +249,7 @@ class SettingsStore {
         height: DEFAULT_HEIGHT
       }
     })
+    this.settings.masterPanel = { ...DEFAULT_MASTER_PANEL }
     persist(this.settings)
     return this.settings
   }

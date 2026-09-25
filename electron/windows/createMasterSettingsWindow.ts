@@ -111,6 +111,12 @@ export function setMasterPanelExpanded(expanded: boolean): void {
   if (expanded) {
     const panel = settingsStore.getMasterPanel()
     win.setSize(panel.width, panel.height)
+    // Among windows at the same alwaysOnTop level, stacking order follows
+    // activation history — since the clock cards were created after this
+    // window, they could otherwise end up drawn above the expanded panel,
+    // covering the dropdown. Force it to the front of its current band
+    // every time it expands (without changing whether it's topmost at all).
+    win.moveTop()
   } else {
     win.setSize(DEFAULT_WIDTH, MASTER_COLLAPSED_HEIGHT)
   }

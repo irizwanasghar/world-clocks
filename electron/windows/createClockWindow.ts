@@ -105,6 +105,7 @@ export function setClockMenuExpanded(id: ClockId, expanded: boolean): void {
   const state = settingsStore.getClock(id)
   suppressSaveBriefly(id)
   win.setSize(state.width, expanded ? state.height + MENU_EXTRA_HEIGHT : state.height)
+  if (expanded) win.moveTop()
 }
 
 export function getAllClockWindows(): Map<ClockId, BrowserWindow> {

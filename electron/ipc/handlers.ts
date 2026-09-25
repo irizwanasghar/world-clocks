@@ -131,6 +131,8 @@ export function registerIpcHandlers(): void {
     if (masterWin && !masterWin.isDestroyed()) {
       const { x, y } = defaultMasterSettingsPosition()
       masterWin.setPosition(x, y)
+      setMasterPanelExpanded(false)
+      masterWin.webContents.send('master-panel-collapsed')
     }
     broadcastSettings()
     return settings

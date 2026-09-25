@@ -116,7 +116,7 @@ export function ClockSettings(): JSX.Element | null {
           className="btn"
           onClick={() => window.desktopAPI.resetPositions().then(setSettings)}
         >
-          Reset Positions
+          Reset Positions &amp; Size
         </button>
       </section>
     </div>

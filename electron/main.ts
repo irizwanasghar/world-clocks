@@ -8,6 +8,13 @@ import { createMasterSettingsWindow } from './windows/createMasterSettingsWindow
 import { createTray } from './tray/tray'
 import { registerIpcHandlers } from './ipc/handlers'
 
+// Per-pixel alpha on transparent, frameless windows can render as opaque
+// black/gray outside the rounded card instead of true transparency when GPU
+// compositing mishandles layered-window alpha (a known Electron-on-Windows
+// issue, especially inside VMs or with certain GPU drivers). Forcing
+// software compositing is the standard workaround.
+app.disableHardwareAcceleration()
+
 ;(global as { appIsQuitting?: boolean }).appIsQuitting = false
 
 const gotLock = app.requestSingleInstanceLock()

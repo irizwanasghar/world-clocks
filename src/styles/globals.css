@@ -66,8 +66,14 @@ body,
 
 .clock-widget {
   position: relative;
-  height: 100%;
-  width: 100%;
+  /* A transparent gutter around the visible card: Windows still draws its
+     native (invisible) resize-hit-test border at the true window edges for
+     resizable transparent frameless windows, which can otherwise show as a
+     hard square poking out at a corner. Keeping the card inset from the
+     window edge puts that border inside the fully transparent margin. */
+  height: calc(100% - 16px);
+  width: calc(100% - 16px);
+  margin: 8px;
   border-radius: 18px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -370,58 +376,25 @@ body,
   opacity: 1;
 }
 
-/* ---------- See all states modal ---------- */
+/* ---------- All US States page ---------- */
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  animation: fade-in 0.15s ease-out;
-}
-
-.modal-panel {
-  width: min(360px, 90vw);
-  max-height: 80vh;
-  background: var(--panel-bg-alt);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+.states-page {
+  height: 100%;
+  background: var(--panel-bg);
+  overflow-y: hidden;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  padding: 20px 20px 12px;
+  font-family: var(--font-text);
 }
 
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 16px 8px;
+.states-page .settings-title {
+  margin-bottom: 14px;
 }
 
-.modal-header h2 {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-}
-
-.modal-close {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.modal-close:hover {
-  background: rgba(255, 255, 255, 0.16);
+.states-page .modal-list {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .modal-search {
@@ -523,4 +496,41 @@ body,
   text-align: center;
   color: var(--text-tertiary);
   font-size: 12.5px;
+}
+
+/* ---------- Floating "See all states" button widget ---------- */
+
+.states-button-widget {
+  height: calc(100% - 16px);
+  width: calc(100% - 16px);
+  margin: 8px;
+  -webkit-app-region: drag;
+}
+
+.states-launch-btn {
+  -webkit-app-region: no-drag;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  font-family: var(--font-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  animation: fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.states-launch-btn:hover {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.states-launch-btn:active {
+  transform: translateY(0);
 }

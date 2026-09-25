@@ -3,6 +3,7 @@ import { CLOCK_DEFINITIONS } from '../src/data/timezones'
 import { settingsStore, initSettingsStore } from './services/settings'
 import { createClockWindow } from './windows/createClockWindow'
 import { createSettingsWindow, getSettingsWindow } from './windows/createSettingsWindow'
+import { createStatesButtonWindow } from './windows/createStatesButtonWindow'
 import { createTray } from './tray/tray'
 import { registerIpcHandlers } from './ipc/handlers'
 
@@ -33,6 +34,7 @@ if (!gotLock) {
         if (state.visible) win.show()
       }
     })
+    createStatesButtonWindow(settings.global.alwaysOnTop)
 
     app.setLoginItemSettings({
       openAtLogin: settings.global.launchAtStartup,

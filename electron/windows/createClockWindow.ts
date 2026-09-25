@@ -31,8 +31,8 @@ export function createClockWindow(id: ClockId): BrowserWindow {
     hasShadow: false,
     roundedCorners: true,
     thickFrame: false,
-    minWidth: 160,
-    minHeight: 76,
+    minWidth: 176,
+    minHeight: 92,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,

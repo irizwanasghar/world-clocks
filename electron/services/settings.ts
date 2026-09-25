@@ -15,20 +15,32 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   launchAtStartup: false
 }
 
-const DEFAULT_WIDTH = 220
-const DEFAULT_HEIGHT = 100
+export const DEFAULT_WIDTH = 236
+const DEFAULT_HEIGHT = 116
 const MARGIN = 14
-const RIGHT_MARGIN = 44
+const RIGHT_MARGIN = 22
+export const STATES_BUTTON_HEIGHT = 54
 
-/** Stacks widgets vertically along the right edge of the primary display's work area. */
+const STACK_COUNT = CLOCK_DEFINITIONS.length + 1 // + the "See all states" button
+
+/** Stacks widgets vertically along the right edge of the primary display's work area.
+ *  index === CLOCK_DEFINITIONS.length is reserved for the "See all states" button,
+ *  which sits directly below the last clock card. */
 function defaultPositionFor(index: number): { x: number; y: number } {
   const display = screen.getPrimaryDisplay()
   const { x: wx, y: wy, width, height } = display.workArea
   const x = wx + width - DEFAULT_WIDTH - RIGHT_MARGIN
-  const totalHeight = CLOCK_DEFINITIONS.length * DEFAULT_HEIGHT + (CLOCK_DEFINITIONS.length - 1) * MARGIN
+  const totalHeight =
+    CLOCK_DEFINITIONS.length * DEFAULT_HEIGHT +
+    STATES_BUTTON_HEIGHT +
+    (STACK_COUNT - 1) * MARGIN
   const startY = wy + Math.max(MARGIN, (height - totalHeight) / 2)
   const y = startY + index * (DEFAULT_HEIGHT + MARGIN)
   return { x, y }
+}
+
+export function defaultStatesButtonPosition(): { x: number; y: number } {
+  return defaultPositionFor(CLOCK_DEFINITIONS.length)
 }
 
 function defaultClockState(index: number): ClockState {

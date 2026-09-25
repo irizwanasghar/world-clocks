@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import type { ClockId, ClockState, GlobalSettings } from '../../src/types'
-import { settingsStore } from '../services/settings'
+import { settingsStore, defaultStatesButtonPosition } from '../services/settings'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 import {
   createClockWindow,
@@ -8,6 +8,8 @@ import {
   getAllClockWindows
 } from '../windows/createClockWindow'
 import { getSettingsWindow } from '../windows/createSettingsWindow'
+import { createStatesWindow } from '../windows/createStatesWindow'
+import { getStatesButtonWindow } from '../windows/createStatesButtonWindow'
 import { refreshTrayMenu } from '../tray/tray'
 
 function broadcastSettings(): void {
@@ -23,6 +25,10 @@ function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
   getAllClockWindows().forEach((win) => {
     if (!win.isDestroyed()) win.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
   })
+  const statesButtonWin = getStatesButtonWindow()
+  if (statesButtonWin && !statesButtonWin.isDestroyed()) {
+    statesButtonWin.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
+  }
 }
 
 export function registerIpcHandlers(): void {
@@ -95,6 +101,11 @@ export function registerIpcHandlers(): void {
       const state = settingsStore.getClock(id)
       win.setBounds({ x: state.x, y: state.y, width: state.width, height: state.height })
     })
+    const statesButtonWin = getStatesButtonWindow()
+    if (statesButtonWin && !statesButtonWin.isDestroyed()) {
+      const { x, y } = defaultStatesButtonPosition()
+      statesButtonWin.setPosition(x, y)
+    }
     broadcastSettings()
     return settings
   })
@@ -112,6 +123,10 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('close-settings-window', () => {
     const win = getSettingsWindow()
     if (win && !win.isDestroyed()) win.hide()
+  })
+
+  ipcMain.handle('open-states-window', () => {
+    createStatesWindow()
   })
 
   ipcMain.handle('get-clock-id', (event) => {

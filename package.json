@@ -40,7 +40,7 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "rizwanasghar1997",
+      "owner": "irizwanasghar",
       "repo": "world-clocks"
     },
     "win": {

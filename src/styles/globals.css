@@ -209,50 +209,34 @@ body,
   background: rgba(255, 255, 255, 0.2);
 }
 
-.peek-button {
+/* ---------- Global peek/tuck-away arrow ---------- */
+
+.peek-toggle-widget {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.peek-toggle-btn {
   -webkit-app-region: no-drag;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--text-tertiary);
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
+  background: var(--glass-bg);
+  color: var(--text-secondary);
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.18s ease, background 0.18s ease, color 0.18s ease;
-  font-size: 11px;
-  line-height: 1;
-  z-index: 2;
+  font-size: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  transition: color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.clock-widget:hover .peek-button {
-  opacity: 1;
-}
-
-.peek-button:hover {
-  background: rgba(255, 255, 255, 0.16);
+.peek-toggle-btn:hover {
   color: var(--text-primary);
-}
-
-/* When peeked, only a sliver of the card is actually on-screen, so the
-   button moves into whichever edge remains visible and stays permanently
-   shown (there's no hover to reveal it if the rest of the card is off
-   the monitor). */
-.peek-button-right {
-  left: 14px;
-  transform: translate(0, -50%);
-  opacity: 1;
-}
-
-.peek-button-left {
-  left: auto;
-  right: 14px;
-  transform: translate(0, -50%);
-  opacity: 1;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
 }
 
 .gear-menu {

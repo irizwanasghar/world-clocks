@@ -22,7 +22,8 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   launchAtStartup: false,
   cardScale: 1,
   dockSide: 'right',
-  censusApiKey: ''
+  censusApiKey: '',
+  peeked: false
 }
 
 export const MIN_CARD_SCALE = 0.75
@@ -30,8 +31,13 @@ export const MAX_CARD_SCALE = 1.6
 
 export const DEFAULT_WIDTH = 236
 const DEFAULT_HEIGHT = 104
-const MARGIN = 12
+const MARGIN = 20
 const RIGHT_MARGIN = 22
+export const PEEK_BUTTON_WIDTH = 22
+export const PEEK_BUTTON_HEIGHT = 64
+const PEEK_BUTTON_GAP = 6
+/** How much of a peeked widget's width stays visible on-screen. */
+export const PEEK_VISIBLE_PX = 28
 export const STATES_BUTTON_HEIGHT = 54
 /** Height of the master settings widget in its default, collapsed (button-only)
  *  state — this is what the layout stacks around. Expanding it grows the
@@ -60,7 +66,7 @@ const FIRST_CLOCK_ROW = 1
 const STATES_BUTTON_ROW = ROW_HEIGHTS.length - 2
 const POPULATION_BUTTON_ROW = ROW_HEIGHTS.length - 1
 
-type DockSide = 'left' | 'right'
+export type DockSide = 'left' | 'right'
 
 function dockX(side: DockSide, workArea: Electron.Rectangle, width: number): number {
   return side === 'right'
@@ -110,6 +116,8 @@ export interface ScaledLayout {
   clockY: (index: number) => number
   statesButtonY: number
   populationButtonY: number
+  peekButtonX: number
+  peekButtonY: number
 }
 
 /** Same vertical-stack layout as defaultPositionForRow, but computed for an
@@ -133,6 +141,13 @@ export function getScaledLayout(scale: number, side: DockSide = 'right'): Scaled
     return y
   }
 
+  const stackTop = rowY(0)
+  const stackBottom = rowY(rowHeights.length - 1) + rowHeights[rowHeights.length - 1]
+  // Sits just outside the stack on the side facing screen center, so it's
+  // always fully reachable regardless of whether the stack is peeked away.
+  const peekButtonX =
+    side === 'right' ? x - PEEK_BUTTON_WIDTH - PEEK_BUTTON_GAP : x + cardWidth + PEEK_BUTTON_GAP
+
   return {
     x,
     cardWidth,
@@ -141,8 +156,18 @@ export function getScaledLayout(scale: number, side: DockSide = 'right'): Scaled
     masterY: rowY(0),
     clockY: (index: number) => rowY(1 + index),
     statesButtonY: rowY(rowHeights.length - 2),
-    populationButtonY: rowY(rowHeights.length - 1)
+    populationButtonY: rowY(rowHeights.length - 1),
+    peekButtonX,
+    peekButtonY: Math.round((stackTop + stackBottom) / 2 - PEEK_BUTTON_HEIGHT / 2)
   }
+}
+
+/** x position for a widget of the given width while the stack is peeked
+ *  away, leaving only PEEK_VISIBLE_PX on-screen at the dock edge. */
+export function peekedX(width: number, side: DockSide, workArea: Electron.Rectangle): number {
+  return side === 'right'
+    ? workArea.x + workArea.width - PEEK_VISIBLE_PX
+    : workArea.x - (width - PEEK_VISIBLE_PX)
 }
 
 function defaultClockState(index: number): ClockState {
@@ -319,14 +344,11 @@ class SettingsStore {
         x,
         y,
         width: DEFAULT_WIDTH,
-        height: DEFAULT_HEIGHT,
-        peeked: false,
-        peekSide: undefined,
-        prePeekX: undefined
+        height: DEFAULT_HEIGHT
       }
     })
     this.settings.masterPanel = { ...DEFAULT_MASTER_PANEL }
-    this.settings.global = { ...this.settings.global, cardScale: 1 }
+    this.settings.global = { ...this.settings.global, cardScale: 1, peeked: false }
     persist(this.settings)
     return this.settings
   }
@@ -343,17 +365,14 @@ class SettingsStore {
         x: layout.x,
         y: layout.clockY(i),
         width: layout.cardWidth,
-        height: layout.cardHeight,
-        peeked: false,
-        peekSide: undefined,
-        prePeekX: undefined
+        height: layout.cardHeight
       }
     })
     this.settings.masterPanel = {
       width: layout.cardWidth,
       height: Math.round(MASTER_DEFAULT_EXPANDED_HEIGHT * clamped)
     }
-    this.settings.global = { ...this.settings.global, cardScale: clamped }
+    this.settings.global = { ...this.settings.global, cardScale: clamped, peeked: false }
     persist(this.settings)
     return this.settings
   }
@@ -366,13 +385,10 @@ class SettingsStore {
       this.settings.clocks[def.id] = {
         ...this.settings.clocks[def.id],
         x: layout.x,
-        y: layout.clockY(i),
-        peeked: false,
-        peekSide: undefined,
-        prePeekX: undefined
+        y: layout.clockY(i)
       }
     })
-    this.settings.global = { ...this.settings.global, dockSide: side }
+    this.settings.global = { ...this.settings.global, dockSide: side, peeked: false }
     persist(this.settings)
     return this.settings
   }

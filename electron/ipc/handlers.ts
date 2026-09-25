@@ -6,6 +6,7 @@ import {
   defaultMasterSettingsPosition,
   defaultPopulationButtonPosition,
   getScaledLayout,
+  peekedX,
   DEFAULT_WIDTH,
   STATES_BUTTON_HEIGHT,
   MASTER_COLLAPSED_HEIGHT,
@@ -26,6 +27,7 @@ import { getMasterSettingsWindow } from '../windows/createMasterSettingsWindow'
 import { createMasterModalWindow } from '../windows/createMasterModalWindow'
 import { getPopulationButtonWindow } from '../windows/createPopulationButtonWindow'
 import { createPopulationWindow } from '../windows/createPopulationWindow'
+import { getPeekButtonWindow } from '../windows/createPeekButtonWindow'
 import { lookupCityPopulation, MissingApiKeyError } from '../services/census'
 import { refreshTrayMenu } from '../tray/tray'
 
@@ -54,6 +56,39 @@ function closeOpenMenu(): void {
   openMenuOwner = null
 }
 
+/** Moves every widget window (5 clock cards + 3 buttons) to either its
+ *  normal position or its peeked-away position, all at once. Only x moves;
+ *  y and size are untouched. Used by the toggle handler and again at
+ *  startup if the app launched with peeked already true from last session.
+ *  Button windows don't persist their own x — it's always recomputed fresh
+ *  from the current scale/dockSide via getScaledLayout, same as everywhere
+ *  else those windows are positioned. */
+export function applyPeekState(peeked: boolean): void {
+  const global = settingsStore.getAll().global
+  const side = global.dockSide
+  const layout = getScaledLayout(global.cardScale, side)
+
+  getAllClockWindows().forEach((win, id) => {
+    if (win.isDestroyed()) return
+    const state = settingsStore.getClock(id)
+    const workArea = screen.getDisplayMatching(win.getBounds()).workArea
+    const x = peeked ? peekedX(state.width, side, workArea) : state.x
+    win.setPosition(x, state.y)
+  })
+
+  const buttons: Array<[ReturnType<typeof getStatesButtonWindow>, number]> = [
+    [getStatesButtonWindow(), layout.statesButtonY],
+    [getMasterSettingsWindow(), layout.masterY],
+    [getPopulationButtonWindow(), layout.populationButtonY]
+  ]
+  buttons.forEach(([win, y]) => {
+    if (!win || win.isDestroyed()) return
+    const workArea = screen.getDisplayMatching(win.getBounds()).workArea
+    const x = peeked ? peekedX(layout.cardWidth, side, workArea) : layout.x
+    win.setPosition(x, y)
+  })
+}
+
 function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
   getAllClockWindows().forEach((win) => {
     if (!win.isDestroyed()) win.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
@@ -69,6 +104,10 @@ function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
   const populationBtnWin = getPopulationButtonWindow()
   if (populationBtnWin && !populationBtnWin.isDestroyed()) {
     populationBtnWin.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
+  }
+  const peekBtnWin = getPeekButtonWindow()
+  if (peekBtnWin && !peekBtnWin.isDestroyed()) {
+    peekBtnWin.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
   }
 }
 
@@ -173,6 +212,11 @@ export function registerIpcHandlers(): void {
       populationBtnWin.setBounds({ x, y, width: DEFAULT_WIDTH, height: POPULATION_BUTTON_HEIGHT })
       applyRoundedShape(populationBtnWin, 14)
     }
+    const peekBtnWin = getPeekButtonWindow()
+    if (peekBtnWin && !peekBtnWin.isDestroyed()) {
+      const layout = getScaledLayout(1, settings.global.dockSide)
+      peekBtnWin.setPosition(layout.peekButtonX, layout.peekButtonY)
+    }
     broadcastSettings()
     return settings
   })
@@ -206,36 +250,10 @@ export function registerIpcHandlers(): void {
     setClockMenuExpanded(id, open)
   })
 
-  ipcMain.handle('toggle-clock-peek', (_e, id: ClockId) => {
-    const win = getClockWindow(id)
-    const state = settingsStore.getClock(id)
-    if (!win || win.isDestroyed()) return settingsStore.getAll()
-
-    if (state.peeked) {
-      const restoreX = state.prePeekX ?? state.x
-      const settings = settingsStore.updateClock(id, {
-        x: restoreX,
-        peeked: false,
-        peekSide: undefined,
-        prePeekX: undefined
-      })
-      win.setPosition(restoreX, state.y)
-      broadcastSettings()
-      return settings
-    }
-
-    const side = settingsStore.getAll().global.dockSide
-    const workArea = screen.getDisplayMatching(win.getBounds()).workArea
-    const visiblePx = 32
-    const peekedX =
-      side === 'right' ? workArea.x + workArea.width - visiblePx : workArea.x - (state.width - visiblePx)
-    const settings = settingsStore.updateClock(id, {
-      x: peekedX,
-      peeked: true,
-      peekSide: side,
-      prePeekX: state.x
-    })
-    win.setPosition(peekedX, state.y)
+  ipcMain.handle('toggle-global-peek', () => {
+    const nextPeeked = !settingsStore.getAll().global.peeked
+    const settings = settingsStore.updateGlobal({ peeked: nextPeeked })
+    applyPeekState(nextPeeked)
     broadcastSettings()
     return settings
   })
@@ -305,6 +323,11 @@ export function registerIpcHandlers(): void {
       applyRoundedShape(populationBtnWin, 14)
     }
 
+    const peekBtnWin = getPeekButtonWindow()
+    if (peekBtnWin && !peekBtnWin.isDestroyed()) {
+      peekBtnWin.setPosition(layout.peekButtonX, layout.peekButtonY)
+    }
+
     broadcastSettings()
     return settings
   })
@@ -333,6 +356,11 @@ export function registerIpcHandlers(): void {
     const populationBtnWin = getPopulationButtonWindow()
     if (populationBtnWin && !populationBtnWin.isDestroyed()) {
       populationBtnWin.setPosition(layout.x, layout.populationButtonY)
+    }
+
+    const peekBtnWin = getPeekButtonWindow()
+    if (peekBtnWin && !peekBtnWin.isDestroyed()) {
+      peekBtnWin.setPosition(layout.peekButtonX, layout.peekButtonY)
     }
 
     broadcastSettings()

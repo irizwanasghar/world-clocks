@@ -35,7 +35,8 @@ export default defineConfig({
           masterSettings: resolve(__dirname, 'src/masterSettings.html'),
           masterModal: resolve(__dirname, 'src/masterModal.html'),
           populationButton: resolve(__dirname, 'src/populationButton.html'),
-          population: resolve(__dirname, 'src/population.html')
+          population: resolve(__dirname, 'src/population.html'),
+          peekButton: resolve(__dirname, 'src/peekButton.html')
         }
       }
     },

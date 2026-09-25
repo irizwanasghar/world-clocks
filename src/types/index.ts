@@ -40,13 +40,6 @@ export interface ClockOverrides {
 export interface ClockState extends WindowBounds, ClockOverrides {
   visible: boolean
   enabled: boolean
-  /** Whether this card is currently "peeked" off the nearest screen edge,
-   *  showing only a small sliver so it's out of the way. */
-  peeked?: boolean
-  /** Which edge it peeked off toward. */
-  peekSide?: 'left' | 'right'
-  /** x position to restore when un-peeked — captured right before peeking. */
-  prePeekX?: number
 }
 
 export interface GlobalSettings {
@@ -65,6 +58,10 @@ export interface GlobalSettings {
    *  Bureau's place-level population queries require one. Empty until the
    *  user adds their own. */
   censusApiKey: string
+  /** Whether the entire widget stack (all clock cards + the 3 buttons) is
+   *  currently tucked off toward the dock edge, leaving only a sliver
+   *  visible. Toggled together via the single peek arrow, not per-widget. */
+  peeked: boolean
 }
 
 export interface EffectiveClockSettings {
@@ -109,7 +106,7 @@ export interface DesktopAPI {
   closeSettingsWindow: () => Promise<void>
   openStatesWindow: () => Promise<void>
   setClockMenuOpen: (id: ClockId, open: boolean) => Promise<void>
-  toggleClockPeek: (id: ClockId) => Promise<AppSettings>
+  toggleGlobalPeek: () => Promise<AppSettings>
   openMasterSettingsWindow: () => Promise<void>
   setCardScale: (scale: number) => Promise<AppSettings>
   setDockSide: (side: 'left' | 'right') => Promise<AppSettings>

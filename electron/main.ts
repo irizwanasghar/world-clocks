@@ -6,8 +6,9 @@ import { createSettingsWindow, getSettingsWindow } from './windows/createSetting
 import { createStatesButtonWindow } from './windows/createStatesButtonWindow'
 import { createMasterSettingsWindow } from './windows/createMasterSettingsWindow'
 import { createPopulationButtonWindow } from './windows/createPopulationButtonWindow'
+import { createPeekButtonWindow } from './windows/createPeekButtonWindow'
 import { createTray } from './tray/tray'
-import { registerIpcHandlers } from './ipc/handlers'
+import { registerIpcHandlers, applyPeekState } from './ipc/handlers'
 
 // Per-pixel alpha on transparent, frameless windows can render as opaque
 // black/gray outside the rounded card instead of true transparency when GPU
@@ -46,6 +47,11 @@ if (!gotLock) {
     createStatesButtonWindow(settings.global.alwaysOnTop)
     createMasterSettingsWindow(settings.global.alwaysOnTop)
     createPopulationButtonWindow(settings.global.alwaysOnTop)
+    createPeekButtonWindow(settings.global.alwaysOnTop, settings.global.cardScale, settings.global.dockSide)
+
+    if (settings.global.peeked) {
+      applyPeekState(true)
+    }
 
     app.setLoginItemSettings({
       openAtLogin: settings.global.launchAtStartup,

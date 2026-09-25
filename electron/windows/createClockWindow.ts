@@ -3,6 +3,7 @@ import { join } from 'path'
 import type { ClockId } from '../../src/types'
 import { settingsStore } from '../services/settings'
 import { applyRoundedShape } from '../services/windowShape'
+import { logDebug } from '../services/debugLog'
 
 const clockWindows = new Map<ClockId, BrowserWindow>()
 const suppressedSaves = new Set<ClockId>()
@@ -80,19 +81,32 @@ export function createClockWindow(id: ClockId): BrowserWindow {
   // full recreate-and-reload on a renderer crash) means a single widget's
   // bad luck on any given launch doesn't require the user to notice,
   // diagnose, and manually restart the whole app.
-  win.webContents.on('did-fail-load', (_e, errorCode) => {
+  win.webContents.on('did-fail-load', (_e, errorCode, errorDescription) => {
+    logDebug(`[clock:${id}] did-fail-load errorCode=${errorCode} desc=${errorDescription}`)
     if (win.isDestroyed()) return
     if (errorCode === -3) return // ERR_ABORTED — usually a benign cancelled navigation
     load()
   })
   win.webContents.on('render-process-gone', (_e, details) => {
+    logDebug(`[clock:${id}] render-process-gone reason=${details.reason} exitCode=${details.exitCode}`)
     if (win.isDestroyed() || details.reason === 'clean-exit') return
     load()
   })
+  // Surfaces any renderer-side JS error (e.g. a React crash that prevents
+  // the card from ever painting) directly to the debug log, instead of it
+  // vanishing into a devtools console nobody's looking at.
+  win.webContents.on('console-message', (_e, level, message, line, sourceId) => {
+    if (level >= 2) {
+      logDebug(`[clock:${id}] console(level=${level}): ${message} (${sourceId}:${line})`)
+    }
+  })
+  win.on('show', () => logDebug(`[clock:${id}] show event, bounds=${JSON.stringify(win.getBounds())}`))
+  win.on('hide', () => logDebug(`[clock:${id}] hide event`))
 
   let shown = false
   win.once('ready-to-show', () => {
     shown = true
+    logDebug(`[clock:${id}] ready-to-show, willShow=${state.visible && state.enabled}`)
     applyRoundedShape(win)
     if (state.visible && state.enabled) win.show()
   })

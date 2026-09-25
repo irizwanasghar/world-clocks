@@ -17,6 +17,7 @@ import {
   SHARED_CENSUS_API_KEY
 } from '../services/settings'
 import { applyRoundedShape } from '../services/windowShape'
+import { logDebug } from '../services/debugLog'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 import {
   createClockWindow,
@@ -74,8 +75,13 @@ export function applyPeekState(peeked: boolean): void {
   const layout = getScaledLayout(global.cardScale, side)
   const workArea = screen.getPrimaryDisplay().workArea
 
+  logDebug(`applyPeekState(peeked=${peeked}) side=${side} scale=${global.cardScale}`)
+
   getAllClockWindows().forEach((win, id) => {
-    if (win.isDestroyed()) return
+    if (win.isDestroyed()) {
+      logDebug(`  clock:${id} destroyed, skipping`)
+      return
+    }
     const state = settingsStore.getClock(id)
     // Prevent the move listener (which persists user drags) from saving
     // this programmatic move as the card's new "normal" position — without
@@ -83,6 +89,9 @@ export function applyPeekState(peeked: boolean): void {
     // that's what got persisted the moment it was peeked.
     suppressClockSave(id)
     const x = peeked ? peekedX(state.width, side, workArea) : state.x
+    logDebug(
+      `  clock:${id} isVisible=${win.isVisible()} persistedX=${state.x} persistedY=${state.y} -> setPosition(${x}, ${state.y})`
+    )
     win.setPosition(x, state.y)
   })
 
@@ -124,6 +133,7 @@ function actualStackCenterY(fallback: number): number {
     getPopulationButtonWindow()
   ].filter((w): w is BrowserWindow => !!w && !w.isDestroyed() && w.isVisible())
 
+  logDebug(`  actualStackCenterY: ${wins.length} visible windows counted (fallback=${fallback})`)
   if (wins.length === 0) return fallback
 
   const tops = wins.map((w) => w.getBounds().y)
@@ -133,7 +143,9 @@ function actualStackCenterY(fallback: number): number {
   })
   const top = Math.min(...tops)
   const bottom = Math.max(...bottoms)
-  return Math.round((top + bottom) / 2 - PEEK_BUTTON_HEIGHT / 2)
+  const result = Math.round((top + bottom) / 2 - PEEK_BUTTON_HEIGHT / 2)
+  logDebug(`  actualStackCenterY: top=${top} bottom=${bottom} -> y=${result}`)
+  return result
 }
 
 /** Repositions the peek arrow and forces a repaint afterward. On Windows, a
@@ -327,6 +339,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('toggle-global-peek', () => {
     const nextPeeked = !settingsStore.getAll().global.peeked
+    logDebug(`toggle-global-peek invoked -> nextPeeked=${nextPeeked}`)
     const settings = settingsStore.updateGlobal({ peeked: nextPeeked })
     applyPeekState(nextPeeked)
     broadcastSettings()

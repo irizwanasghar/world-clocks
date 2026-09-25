@@ -10,6 +10,7 @@ import { createPeekButtonWindow, getPeekButtonWindow } from './windows/createPee
 import { createTray } from './tray/tray'
 import { registerIpcHandlers, applyPeekState } from './ipc/handlers'
 import { initAutoUpdater, checkForUpdates } from './services/updater'
+import { logDebug } from './services/debugLog'
 
 // Per-pixel alpha on transparent, frameless windows can render as opaque
 // black/gray outside the rounded card instead of true transparency when GPU
@@ -33,6 +34,7 @@ if (!gotLock) {
   })
 
   app.whenReady().then(() => {
+    logDebug(`===== app startup, version=${app.getVersion()} =====`)
     // Applies to every frame:true window (All Clocks Settings, All US
     // States, City Population) — the widget cards and buttons are all
     // frame:false and never show a menu bar regardless.

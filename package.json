@@ -1,6 +1,6 @@
 {
   "name": "world-clocks",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Floating world-clock widgets for US clients from Pakistan",
   "main": "out/main/index.js",
   "author": "rizwanasghar1997@gmail.com",

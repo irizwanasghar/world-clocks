@@ -13,6 +13,15 @@ import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 
 const STORE_FILE = join(app.getPath('userData'), 'world-clocks-settings.json')
 
+/** Shared Census API key baked into the app so no individual user has to
+ *  sign up for their own — it's a free key with no billing behind it, only
+ *  a shared rate limit, so shipping it with the app (rather than making
+ *  every install register separately) is the intended tradeoff. The
+ *  Population/States-cities UI still lets a user paste their own key,
+ *  which is used instead of this one if they ever do (e.g. if this shared
+ *  key hits its rate limit). */
+export const SHARED_CENSUS_API_KEY = 'a199ecfd047eae509989474575bdf233ddfe27bf'
+
 const DEFAULT_GLOBAL: GlobalSettings = {
   alwaysOnTop: true,
   showSeconds: false,

@@ -9,6 +9,7 @@ import { createPopulationButtonWindow } from './windows/createPopulationButtonWi
 import { createPeekButtonWindow } from './windows/createPeekButtonWindow'
 import { createTray } from './tray/tray'
 import { registerIpcHandlers, applyPeekState } from './ipc/handlers'
+import { initAutoUpdater } from './services/updater'
 
 // Per-pixel alpha on transparent, frameless windows can render as opaque
 // black/gray outside the rounded card instead of true transparency when GPU
@@ -52,6 +53,8 @@ if (!gotLock) {
     if (settings.global.peeked) {
       applyPeekState(true)
     }
+
+    initAutoUpdater()
 
     app.setLoginItemSettings({
       openAtLogin: settings.global.launchAtStartup,

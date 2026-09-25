@@ -12,7 +12,8 @@ import {
   MASTER_COLLAPSED_HEIGHT,
   POPULATION_BUTTON_HEIGHT,
   PEEK_BUTTON_WIDTH,
-  PEEK_BUTTON_GAP
+  PEEK_BUTTON_GAP,
+  SHARED_CENSUS_API_KEY
 } from '../services/settings'
 import { applyRoundedShape } from '../services/windowShape'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
@@ -301,7 +302,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('lookup-population', async (_e, city: string, stateAbbr: string) => {
     try {
-      const apiKey = settingsStore.getAll().global.censusApiKey
+      const apiKey = settingsStore.getAll().global.censusApiKey.trim() || SHARED_CENSUS_API_KEY
       const result = await lookupCityPopulation(city, stateAbbr, apiKey)
       return { ok: true as const, result }
     } catch (err) {
@@ -314,7 +315,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('list-state-cities', async (_e, stateAbbr: string) => {
     try {
-      const apiKey = settingsStore.getAll().global.censusApiKey
+      const apiKey = settingsStore.getAll().global.censusApiKey.trim() || SHARED_CENSUS_API_KEY
       const results = await listCitiesInState(stateAbbr, apiKey)
       return { ok: true as const, results }
     } catch (err) {

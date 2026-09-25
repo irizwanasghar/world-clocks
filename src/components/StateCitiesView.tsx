@@ -61,10 +61,11 @@ export function StateCitiesView({ state, onBack }: StateCitiesViewProps): JSX.El
 
       {status === 'missing-key' && (
         <div className="settings-section">
-          <h2>Census API Key Required</h2>
+          <h2>Shared API Key Unavailable</h2>
           <p className="modal-hint">
-            The Census Bureau requires a free API key for this lookup. Get one at{' '}
-            <strong>api.census.gov/data/key_signup.html</strong>, then paste it below.
+            The app's built-in Census API key isn't working right now (it may have hit its rate limit). You
+            can use your own free key instead — get one at <strong>api.census.gov/data/key_signup.html</strong>,
+            then paste it below.
           </p>
           <div className="population-form" style={{ marginTop: 8 }}>
             <input

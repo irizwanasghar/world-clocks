@@ -4,6 +4,7 @@ import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 import { settingsStore } from '../services/settings'
 import { createClockWindow, getClockWindow, getAllClockWindows } from '../windows/createClockWindow'
 import { createSettingsWindow } from '../windows/createSettingsWindow'
+import { checkForUpdates } from '../services/updater'
 
 let tray: Tray | null = null
 
@@ -77,6 +78,8 @@ export function refreshTrayMenu(): void {
     { type: 'separator' },
     { label: 'Settings', click: () => createSettingsWindow() },
     { label: 'Reset Positions', click: resetPositions },
+    { type: 'separator' },
+    { label: 'Check for Updates', click: checkForUpdates },
     { type: 'separator' },
     {
       label: 'Quit',

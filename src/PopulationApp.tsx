@@ -67,19 +67,18 @@ export function PopulationApp(): JSX.Element | null {
 
   if (!settings) return null
 
-  const hasKey = settings.global.censusApiKey.trim().length > 0
-
   return (
     <div className="settings-app">
       <div className="settings-panel">
         <h1 className="settings-title">City Population</h1>
 
-        {(!hasKey || status === 'missing-key') && (
+        {status === 'missing-key' && (
           <section className="settings-section">
-            <h2>Census API Key Required</h2>
+            <h2>Shared API Key Unavailable</h2>
             <p className="modal-hint">
-              The Census Bureau requires a free API key for this lookup. Get one at{' '}
-              <strong>api.census.gov/data/key_signup.html</strong>, then paste it below.
+              The app's built-in Census API key isn't working right now (it may have hit its rate limit). You
+              can use your own free key instead — get one at <strong>api.census.gov/data/key_signup.html</strong>,
+              then paste it below.
             </p>
             <div className="population-form" style={{ marginTop: 8 }}>
               <input
@@ -134,7 +133,7 @@ export function PopulationApp(): JSX.Element | null {
               <p className="modal-hint">No match found for that city in {stateAbbr}. Check the spelling and try again.</p>
             )}
             {status === 'missing-key' && (
-              <p className="population-error">Add your Census API key above, then search again.</p>
+              <p className="population-error">Add your own Census API key above, then search again.</p>
             )}
             {status === 'error' && <p className="population-error">{errorMessage || 'Lookup failed. Check your internet connection.'}</p>}
             {status === 'found' && result && (

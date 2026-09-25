@@ -16,9 +16,9 @@ export function createMasterModalWindow(): BrowserWindow {
 
   const win = new BrowserWindow({
     width: 340,
-    height: 480,
+    height: 640,
     minWidth: 300,
-    minHeight: 420,
+    minHeight: 500,
     title: 'All Clocks Settings',
     frame: true,
     show: false,

@@ -319,7 +319,10 @@ class SettingsStore {
         x,
         y,
         width: DEFAULT_WIDTH,
-        height: DEFAULT_HEIGHT
+        height: DEFAULT_HEIGHT,
+        peeked: false,
+        peekSide: undefined,
+        prePeekX: undefined
       }
     })
     this.settings.masterPanel = { ...DEFAULT_MASTER_PANEL }
@@ -340,7 +343,10 @@ class SettingsStore {
         x: layout.x,
         y: layout.clockY(i),
         width: layout.cardWidth,
-        height: layout.cardHeight
+        height: layout.cardHeight,
+        peeked: false,
+        peekSide: undefined,
+        prePeekX: undefined
       }
     })
     this.settings.masterPanel = {
@@ -360,7 +366,10 @@ class SettingsStore {
       this.settings.clocks[def.id] = {
         ...this.settings.clocks[def.id],
         x: layout.x,
-        y: layout.clockY(i)
+        y: layout.clockY(i),
+        peeked: false,
+        peekSide: undefined,
+        prePeekX: undefined
       }
     })
     this.settings.global = { ...this.settings.global, dockSide: side }

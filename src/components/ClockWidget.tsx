@@ -11,6 +11,7 @@ interface ClockWidgetProps {
   global: GlobalSettings
   onUpdateClock: (partial: Partial<ClockState>) => void
   onHide: (id: ClockId) => void
+  onTogglePeek: (id: ClockId) => void
 }
 
 export function ClockWidget({
@@ -18,7 +19,8 @@ export function ClockWidget({
   clockState,
   global,
   onUpdateClock,
-  onHide
+  onHide,
+  onTogglePeek
 }: ClockWidgetProps): JSX.Element {
   const effective = getEffectiveSettings(clockState, global)
   const { time, date } = useClock(definition.timezone, effective.use12Hour, effective.showSeconds)
@@ -89,6 +91,17 @@ export function ClockWidget({
             }}
           >
             ⚙
+          </button>
+
+          <button
+            className={`peek-button ${clockState.peeked ? `peek-button-${clockState.peekSide}` : ''}`}
+            aria-label={clockState.peeked ? 'Show full widget' : 'Tuck widget to screen edge'}
+            onClick={(e) => {
+              e.stopPropagation()
+              onTogglePeek(definition.id)
+            }}
+          >
+            {clockState.peeked ? (clockState.peekSide === 'right' ? '❮' : '❯') : '⇔'}
           </button>
 
           <div className="clock-header">

@@ -22,6 +22,7 @@ const api: DesktopAPI = {
   closeSettingsWindow: () => ipcRenderer.invoke('close-settings-window'),
   openStatesWindow: () => ipcRenderer.invoke('open-states-window'),
   setClockMenuOpen: (id: ClockId, open: boolean) => ipcRenderer.invoke('set-clock-menu-open', id, open),
+  toggleClockPeek: (id: ClockId) => ipcRenderer.invoke('toggle-clock-peek', id),
   openMasterSettingsWindow: () => ipcRenderer.invoke('open-master-settings-window'),
   setCardScale: (scale: number) => ipcRenderer.invoke('set-card-scale', scale),
   setDockSide: (side: 'left' | 'right') => ipcRenderer.invoke('set-dock-side', side),

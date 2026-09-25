@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, screen } from 'electron'
 import type { ClockId, ClockOverrides, ClockState, GlobalSettings } from '../../src/types'
 import {
   settingsStore,
@@ -204,6 +204,40 @@ export function registerIpcHandlers(): void {
       openMenuOwner = null
     }
     setClockMenuExpanded(id, open)
+  })
+
+  ipcMain.handle('toggle-clock-peek', (_e, id: ClockId) => {
+    const win = getClockWindow(id)
+    const state = settingsStore.getClock(id)
+    if (!win || win.isDestroyed()) return settingsStore.getAll()
+
+    if (state.peeked) {
+      const restoreX = state.prePeekX ?? state.x
+      const settings = settingsStore.updateClock(id, {
+        x: restoreX,
+        peeked: false,
+        peekSide: undefined,
+        prePeekX: undefined
+      })
+      win.setPosition(restoreX, state.y)
+      broadcastSettings()
+      return settings
+    }
+
+    const side = settingsStore.getAll().global.dockSide
+    const workArea = screen.getDisplayMatching(win.getBounds()).workArea
+    const visiblePx = 32
+    const peekedX =
+      side === 'right' ? workArea.x + workArea.width - visiblePx : workArea.x - (state.width - visiblePx)
+    const settings = settingsStore.updateClock(id, {
+      x: peekedX,
+      peeked: true,
+      peekSide: side,
+      prePeekX: state.x
+    })
+    win.setPosition(peekedX, state.y)
+    broadcastSettings()
+    return settings
   })
 
   ipcMain.handle('open-master-settings-window', () => {

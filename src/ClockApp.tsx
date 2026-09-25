@@ -44,6 +44,10 @@ export function ClockApp(): JSX.Element | null {
     window.desktopAPI.hideClock(id)
   }
 
+  const onTogglePeek = (id: ClockId): void => {
+    window.desktopAPI.toggleClockPeek(id).then(setSettings)
+  }
+
   return (
     <ClockWidget
       definition={definition}
@@ -51,6 +55,7 @@ export function ClockApp(): JSX.Element | null {
       global={settings.global}
       onUpdateClock={onUpdateClock}
       onHide={onHide}
+      onTogglePeek={onTogglePeek}
     />
   )
 }

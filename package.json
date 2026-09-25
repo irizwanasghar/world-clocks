@@ -1,0 +1,56 @@
+{
+  "name": "world-clocks",
+  "version": "1.0.0",
+  "description": "Floating world-clock widgets for US clients from Pakistan",
+  "main": "out/main/index.js",
+  "author": "rizwanasghar1997@gmail.com",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "tsc --noEmit -p tsconfig.json && electron-vite build",
+    "start": "electron-vite preview",
+    "dist:win": "npm run build && electron-builder --win nsis",
+    "dist:mac": "npm run build && electron-builder --mac dmg"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "electron": "^31.0.2",
+    "electron-builder": "^24.13.3",
+    "electron-vite": "^2.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.1"
+  },
+  "build": {
+    "appId": "com.rizwan.worldclocks",
+    "productName": "WorldClocks",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "WorldClocks Setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities",
+      "artifactName": "WorldClocks.dmg",
+      "identity": null
+    }
+  },
+  "allowScripts": {
+    "electron@31.7.7": true,
+    "esbuild@0.21.5": true
+  }
+}

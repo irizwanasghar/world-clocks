@@ -140,8 +140,26 @@ export function createClockWindow(id: ClockId): BrowserWindow {
   })
 
   win.on('close', (e) => {
+    // The real "hide this card" action is hideClock's IPC handler, which
+    // calls win.hide() directly and never triggers this native close event
+    // at all — so persisting visible:false here was never actually needed
+    // for that legitimate flow.
+    //
+    // What it WAS doing: any external close signal reaching this window —
+    // Task Manager's "End Task" (which sends a close request to each
+    // top-level window before the process is force-terminated, entirely
+    // bypassing app.quit()'s before-quit event), Alt+F4, a Windows
+    // shutdown/logoff — got misinterpreted as "the user wants this card
+    // permanently hidden" and immediately wrote that to disk. Reinstalling
+    // this app for testing meant ending its task in Task Manager first,
+    // every single time, which is exactly the scenario above: a race
+    // between however many windows' close handlers finished running
+    // before the process died, silently corrupting a random subset of
+    // clocks' persisted visibility on almost every single test cycle.
+    //
+    // Just hide without writing anything. Whatever's already on disk stays
+    // accurate regardless of how or why this window is closing.
     e.preventDefault()
-    settingsStore.updateClock(id, { visible: false })
     win.hide()
   })
 

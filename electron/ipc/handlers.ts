@@ -109,7 +109,7 @@ export function applyPeekState(peeked: boolean): void {
     // frame left behind" issue on Windows that justified that fix in the
     // first place, just never applied to them. Reusing the same helper
     // keeps all four widgets consistent.
-    moveWidgetWithRepaint(win, x, y, layout.cardWidth, layout.buttonHeight, 14)
+    moveButtonWithRepaint(win, x, y, 14)
   })
 
   // The arrow itself also follows the stack, staying just outside whichever
@@ -189,6 +189,26 @@ function moveWidgetWithRepaint(
 
 function movePeekButton(win: BrowserWindow, x: number, y: number): void {
   moveWidgetWithRepaint(win, x, y, PEEK_BUTTON_WIDTH, PEEK_BUTTON_HEIGHT, 18)
+}
+
+/** Same repaint problem as movePeekButton, but for the States/Master
+ *  Settings/Population buttons specifically — a size round-trip was tried
+ *  here too, but even landing on the exact same fixed width/height every
+ *  time, the buttons' measured bounds (as read back by actualStackCenterY)
+ *  turned out to drift a little further with every single call regardless
+ *  — climbing several pixels over the course of a dozen-ish peek toggles,
+ *  something the tiny 36×36 peek arrow never showed under the same
+ *  approach. Whatever the exact mechanism, resizing these larger windows
+ *  isn't as clean as it is for the arrow, so they get a hide/show repaint
+ *  instead, which never touches size at all — nothing to drift. */
+function moveButtonWithRepaint(win: BrowserWindow, x: number, y: number, shapeRadius: number): void {
+  win.setPosition(x, y)
+  if (win.isDestroyed()) return
+  applyRoundedShape(win, shapeRadius)
+  if (win.isVisible()) {
+    win.hide()
+    win.show()
+  }
 }
 
 function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
@@ -478,24 +498,17 @@ export function registerIpcHandlers(): void {
 
     const statesButtonWin = getStatesButtonWindow()
     if (statesButtonWin && !statesButtonWin.isDestroyed()) {
-      moveWidgetWithRepaint(statesButtonWin, layout.x, layout.statesButtonY, layout.cardWidth, layout.buttonHeight, 14)
+      moveButtonWithRepaint(statesButtonWin, layout.x, layout.statesButtonY, 14)
     }
 
     const masterWin = getMasterSettingsWindow()
     if (masterWin && !masterWin.isDestroyed()) {
-      moveWidgetWithRepaint(masterWin, layout.x, layout.masterY, layout.cardWidth, layout.buttonHeight, 14)
+      moveButtonWithRepaint(masterWin, layout.x, layout.masterY, 14)
     }
 
     const populationBtnWin = getPopulationButtonWindow()
     if (populationBtnWin && !populationBtnWin.isDestroyed()) {
-      moveWidgetWithRepaint(
-        populationBtnWin,
-        layout.x,
-        layout.populationButtonY,
-        layout.cardWidth,
-        layout.buttonHeight,
-        14
-      )
+      moveButtonWithRepaint(populationBtnWin, layout.x, layout.populationButtonY, 14)
     }
 
     const peekBtnWin = getPeekButtonWindow()

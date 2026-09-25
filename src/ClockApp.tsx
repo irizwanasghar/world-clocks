@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { AppSettings, ClockId, GlobalSettings } from './types'
+import type { AppSettings, ClockId, ClockState } from './types'
 import { CLOCK_MAP } from './data/timezones'
 import { ClockWidget } from './components/ClockWidget'
 
@@ -34,9 +34,10 @@ export function ClockApp(): JSX.Element | null {
   if (!clockId || !settings) return null
 
   const definition = CLOCK_MAP[clockId]
+  const clockState = settings.clocks[clockId]
 
-  const onUpdateGlobal = (partial: Partial<GlobalSettings>): void => {
-    window.desktopAPI.saveGlobalSettings(partial).then(setSettings)
+  const onUpdateClock = (partial: Partial<ClockState>): void => {
+    window.desktopAPI.saveClockState(clockId, partial).then(setSettings)
   }
 
   const onHide = (id: ClockId): void => {
@@ -46,8 +47,9 @@ export function ClockApp(): JSX.Element | null {
   return (
     <ClockWidget
       definition={definition}
+      clockState={clockState}
       global={settings.global}
-      onUpdateGlobal={onUpdateGlobal}
+      onUpdateClock={onUpdateClock}
       onHide={onHide}
     />
   )

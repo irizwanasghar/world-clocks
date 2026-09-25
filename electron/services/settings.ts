@@ -1,7 +1,7 @@
 import { app, screen } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join, dirname } from 'path'
-import type { AppSettings, ClockId, ClockState, GlobalSettings } from '../../src/types'
+import type { AppSettings, ClockId, ClockOverrides, ClockState, GlobalSettings } from '../../src/types'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 
 const STORE_FILE = join(app.getPath('userData'), 'world-clocks-settings.json')
@@ -20,6 +20,7 @@ const DEFAULT_HEIGHT = 116
 const MARGIN = 14
 const RIGHT_MARGIN = 22
 export const STATES_BUTTON_HEIGHT = 54
+export const MASTER_SETTINGS_HEIGHT = 54
 
 const STACK_COUNT = CLOCK_DEFINITIONS.length + 1 // + the "See all states" button
 
@@ -41,6 +42,12 @@ function defaultPositionFor(index: number): { x: number; y: number } {
 
 export function defaultStatesButtonPosition(): { x: number; y: number } {
   return defaultPositionFor(CLOCK_DEFINITIONS.length)
+}
+
+/** The master "Settings (All)" widget sits directly above the first card. */
+export function defaultMasterSettingsPosition(): { x: number; y: number } {
+  const top = defaultPositionFor(0)
+  return { x: top.x, y: top.y - MARGIN - MASTER_SETTINGS_HEIGHT }
 }
 
 function defaultClockState(index: number): ClockState {
@@ -173,6 +180,18 @@ class SettingsStore {
     return this.settings
   }
 
+  /** Removes the given per-clock overrides from every clock, so a master
+   *  settings change always applies uniformly across all cards. */
+  clearClockOverrides(keys: Array<keyof ClockOverrides>): AppSettings {
+    CLOCK_DEFINITIONS.forEach((def) => {
+      const clock = { ...this.settings.clocks[def.id] }
+      keys.forEach((key) => delete clock[key])
+      this.settings.clocks[def.id] = clock
+    })
+    persist(this.settings)
+    return this.settings
+  }
+
   resetPositions(): AppSettings {
     CLOCK_DEFINITIONS.forEach((def, i) => {
       const { x, y } = defaultPositionFor(i)
@@ -202,6 +221,8 @@ export const settingsStore = {
     getInstance().updateClock(id, partial),
   updateGlobal: (partial: Partial<GlobalSettings>): AppSettings =>
     getInstance().updateGlobal(partial),
+  clearClockOverrides: (keys: Array<keyof ClockOverrides>): AppSettings =>
+    getInstance().clearClockOverrides(keys),
   resetPositions: (): AppSettings => getInstance().resetPositions()
 }
 

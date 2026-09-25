@@ -1,17 +1,26 @@
 import { useEffect, useState } from 'react'
-import type { ClockDefinition, ClockId, GlobalSettings } from '../types'
+import type { ClockDefinition, ClockId, ClockState, GlobalSettings } from '../types'
 import { useClock } from '../hooks/useClock'
 import { FlagIcon } from './FlagIcon'
+import { getEffectiveSettings } from '../data/effectiveSettings'
 
 interface ClockWidgetProps {
   definition: ClockDefinition
+  clockState: ClockState
   global: GlobalSettings
-  onUpdateGlobal: (partial: Partial<GlobalSettings>) => void
+  onUpdateClock: (partial: Partial<ClockState>) => void
   onHide: (id: ClockId) => void
 }
 
-export function ClockWidget({ definition, global, onUpdateGlobal, onHide }: ClockWidgetProps): JSX.Element {
-  const { time, date } = useClock(definition.timezone, global.use12Hour, global.showSeconds)
+export function ClockWidget({
+  definition,
+  clockState,
+  global,
+  onUpdateClock,
+  onHide
+}: ClockWidgetProps): JSX.Element {
+  const effective = getEffectiveSettings(clockState, global)
+  const { time, date } = useClock(definition.timezone, effective.use12Hour, effective.showSeconds)
   const [menuOpen, setMenuOpen] = useState(false)
   // Captured window height (minus the gutter) right before the menu opens, so
   // the card keeps its normal size while the window grows beneath it for the
@@ -46,7 +55,7 @@ export function ClockWidget({ definition, global, onUpdateGlobal, onHide }: Cloc
       <div
         className="clock-widget"
         style={{
-          ['--glass-alpha' as string]: String(global.opacity),
+          ['--glass-alpha' as string]: String(effective.opacity),
           ...(cardHeight ? { height: `${cardHeight}px` } : {})
         }}
       >
@@ -79,18 +88,18 @@ export function ClockWidget({ definition, global, onUpdateGlobal, onHide }: Cloc
         >
           <button
             className="menu-item"
-            onClick={() => onUpdateGlobal({ showSeconds: !global.showSeconds })}
+            onClick={() => onUpdateClock({ showSeconds: !effective.showSeconds })}
           >
-            {global.showSeconds ? '✓ ' : ''}Show seconds
+            {effective.showSeconds ? '✓ ' : ''}Show seconds
           </button>
-          <button className="menu-item" onClick={() => onUpdateGlobal({ use12Hour: !global.use12Hour })}>
-            {global.use12Hour ? '12-hour' : '24-hour'} (toggle)
+          <button className="menu-item" onClick={() => onUpdateClock({ use12Hour: !effective.use12Hour })}>
+            {effective.use12Hour ? '12-hour' : '24-hour'} (toggle)
           </button>
           <button
             className="menu-item"
-            onClick={() => onUpdateGlobal({ alwaysOnTop: !global.alwaysOnTop })}
+            onClick={() => onUpdateClock({ alwaysOnTop: !effective.alwaysOnTop })}
           >
-            {global.alwaysOnTop ? '✓ ' : ''}Always on top
+            {effective.alwaysOnTop ? '✓ ' : ''}Always on top
           </button>
           <div className="menu-item opacity-row">
             <span>Opacity</span>
@@ -99,8 +108,8 @@ export function ClockWidget({ definition, global, onUpdateGlobal, onHide }: Cloc
               min={0.2}
               max={1}
               step={0.05}
-              value={global.opacity}
-              onChange={(e) => onUpdateGlobal({ opacity: Number(e.target.value) })}
+              value={effective.opacity}
+              onChange={(e) => onUpdateClock({ opacity: Number(e.target.value) })}
             />
           </div>
           <button

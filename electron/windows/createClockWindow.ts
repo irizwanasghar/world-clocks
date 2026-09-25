@@ -33,6 +33,7 @@ export function createClockWindow(id: ClockId): BrowserWindow {
 
   const state = settingsStore.getClock(id)
   const global = settingsStore.getAll().global
+  const effectiveAlwaysOnTop = state.alwaysOnTop ?? global.alwaysOnTop
 
   const win = new BrowserWindow({
     x: state.x,
@@ -42,7 +43,7 @@ export function createClockWindow(id: ClockId): BrowserWindow {
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
-    alwaysOnTop: global.alwaysOnTop,
+    alwaysOnTop: effectiveAlwaysOnTop,
     skipTaskbar: true,
     resizable: true,
     show: false,
@@ -59,7 +60,7 @@ export function createClockWindow(id: ClockId): BrowserWindow {
     }
   })
 
-  win.setAlwaysOnTop(global.alwaysOnTop, 'screen-saver')
+  win.setAlwaysOnTop(effectiveAlwaysOnTop, 'screen-saver')
 
   const query = `?clockId=${id}`
   if (windowIsDev()) {

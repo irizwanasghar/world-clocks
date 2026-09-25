@@ -31,7 +31,8 @@ export default defineConfig({
           clock: resolve(__dirname, 'src/clock.html'),
           settings: resolve(__dirname, 'src/settings.html'),
           states: resolve(__dirname, 'src/states.html'),
-          statesButton: resolve(__dirname, 'src/statesButton.html')
+          statesButton: resolve(__dirname, 'src/statesButton.html'),
+          masterSettings: resolve(__dirname, 'src/masterSettings.html')
         }
       }
     },

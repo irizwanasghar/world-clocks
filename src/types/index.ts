@@ -26,7 +26,18 @@ export interface WindowBounds {
   height: number
 }
 
-export interface ClockState extends WindowBounds {
+/** Per-clock overrides for the four "quick" settings. Undefined means "use
+ *  the global value". Set by that clock's own gear menu; cleared whenever
+ *  the master settings widget changes the corresponding global value, so a
+ *  master change always applies to every card. */
+export interface ClockOverrides {
+  showSeconds?: boolean
+  use12Hour?: boolean
+  alwaysOnTop?: boolean
+  opacity?: number
+}
+
+export interface ClockState extends WindowBounds, ClockOverrides {
   visible: boolean
   enabled: boolean
 }
@@ -38,6 +49,13 @@ export interface GlobalSettings {
   opacity: number
   theme: Theme
   launchAtStartup: boolean
+}
+
+export interface EffectiveClockSettings {
+  showSeconds: boolean
+  use12Hour: boolean
+  alwaysOnTop: boolean
+  opacity: number
 }
 
 export interface AppSettings {
@@ -61,6 +79,7 @@ export interface DesktopAPI {
   closeSettingsWindow: () => Promise<void>
   openStatesWindow: () => Promise<void>
   setClockMenuOpen: (id: ClockId, open: boolean) => Promise<void>
+  setMasterMenuOpen: (open: boolean) => Promise<void>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
 }
 

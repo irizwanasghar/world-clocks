@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import type { ClockId, ClockState, GlobalSettings } from '../../src/types'
+import type { ClockId, ClockOverrides, ClockState, GlobalSettings } from '../../src/types'
 import { settingsStore, defaultStatesButtonPosition } from '../services/settings'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
 import {
@@ -11,6 +11,7 @@ import {
 import { getSettingsWindow } from '../windows/createSettingsWindow'
 import { createStatesWindow } from '../windows/createStatesWindow'
 import { getStatesButtonWindow } from '../windows/createStatesButtonWindow'
+import { getMasterSettingsWindow, setMasterSettingsExpanded } from '../windows/createMasterSettingsWindow'
 import { refreshTrayMenu } from '../tray/tray'
 
 function broadcastSettings(): void {
@@ -30,13 +31,25 @@ function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
   if (statesButtonWin && !statesButtonWin.isDestroyed()) {
     statesButtonWin.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
   }
+  const masterWin = getMasterSettingsWindow()
+  if (masterWin && !masterWin.isDestroyed()) {
+    masterWin.setAlwaysOnTop(alwaysOnTop, 'screen-saver')
+  }
 }
 
 export function registerIpcHandlers(): void {
   ipcMain.handle('get-settings', () => settingsStore.getAll())
 
   ipcMain.handle('save-global-settings', (_e, partial: Partial<GlobalSettings>) => {
-    const settings = settingsStore.updateGlobal(partial)
+    let settings = settingsStore.updateGlobal(partial)
+    // A master settings change always wins over any per-card override for
+    // the fields it touches, so every card reflects it uniformly.
+    const overrideKeys = (['showSeconds', 'use12Hour', 'alwaysOnTop', 'opacity'] as const).filter(
+      (key) => key in partial
+    ) as Array<keyof ClockOverrides>
+    if (overrideKeys.length > 0) {
+      settings = settingsStore.clearClockOverrides(overrideKeys)
+    }
     if (typeof partial.alwaysOnTop === 'boolean') {
       applyAlwaysOnTopToAll(partial.alwaysOnTop)
     }
@@ -46,6 +59,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('save-clock-state', (_e, id: ClockId, partial: Partial<ClockState>) => {
     const settings = settingsStore.updateClock(id, partial)
+    if (typeof partial.alwaysOnTop === 'boolean') {
+      const win = getClockWindow(id)
+      if (win && !win.isDestroyed()) win.setAlwaysOnTop(partial.alwaysOnTop, 'screen-saver')
+    }
     broadcastSettings()
     return settings
   })
@@ -132,6 +149,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('set-clock-menu-open', (_e, id: ClockId, open: boolean) => {
     setClockMenuExpanded(id, open)
+  })
+
+  ipcMain.handle('set-master-menu-open', (_e, open: boolean) => {
+    setMasterSettingsExpanded(open)
   })
 
   ipcMain.handle('get-clock-id', (event) => {

@@ -5,9 +5,11 @@ import { Toggle } from './components/Toggle'
 export function MasterModalApp(): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [liveScale, setLiveScale] = useState<number | null>(null)
+  const [version, setVersion] = useState('')
 
   useEffect(() => {
     window.desktopAPI.getSettings().then(setSettings)
+    window.desktopAPI.getAppVersion().then(setVersion)
     const unsubscribe = window.desktopAPI.onSettingsChanged(setSettings)
     return unsubscribe
   }, [])
@@ -96,6 +98,8 @@ export function MasterModalApp(): JSX.Element | null {
             Reset Positions &amp; Size
           </button>
         </section>
+
+        {version && <p className="modal-hint" style={{ textAlign: 'center', marginTop: 8 }}>v{version}</p>}
       </div>
     </div>
   )

@@ -3,6 +3,7 @@ import type { AppSettings, ClockId, ClockState, DesktopAPI, GlobalSettings } fro
 
 const api: DesktopAPI = {
   getSettings: () => ipcRenderer.invoke('get-settings'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   saveGlobalSettings: (settings: Partial<GlobalSettings>) =>
     ipcRenderer.invoke('save-global-settings', settings),
   saveClockState: (id: ClockId, state: Partial<ClockState>) =>

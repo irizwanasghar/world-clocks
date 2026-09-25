@@ -111,6 +111,7 @@ export interface DesktopAPI {
   setCardScale: (scale: number) => Promise<AppSettings>
   setDockSide: (side: 'left' | 'right') => Promise<AppSettings>
   openPopulationWindow: () => Promise<void>
+  getAppVersion: () => Promise<string>
   lookupPopulation: (
     city: string,
     stateAbbr: string

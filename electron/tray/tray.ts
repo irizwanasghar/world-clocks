@@ -54,7 +54,7 @@ function resetPositions(): void {
 
 export function createTray(): Tray {
   tray = new Tray(buildIcon())
-  tray.setToolTip('World Clocks')
+  tray.setToolTip(`World Clocks v${app.getVersion()}`)
   refreshTrayMenu()
   return tray
 }
@@ -81,6 +81,8 @@ export function refreshTrayMenu(): void {
   }))
 
   const menu = Menu.buildFromTemplate([
+    { label: `World Clocks v${app.getVersion()}`, enabled: false },
+    { type: 'separator' },
     { label: 'Show All', click: showAll },
     { label: 'Hide All', click: hideAll },
     { type: 'separator' },

@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, screen } from 'electron'
+import { ipcMain, BrowserWindow, screen, app } from 'electron'
 import type { ClockId, ClockOverrides, ClockState, GlobalSettings } from '../../src/types'
 import {
   settingsStore,
@@ -186,6 +186,8 @@ function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {
 
 export function registerIpcHandlers(): void {
   ipcMain.handle('get-settings', () => settingsStore.getAll())
+
+  ipcMain.handle('get-app-version', () => app.getVersion())
 
   ipcMain.handle('save-global-settings', (_e, partial: Partial<GlobalSettings>) => {
     let settings = settingsStore.updateGlobal(partial)

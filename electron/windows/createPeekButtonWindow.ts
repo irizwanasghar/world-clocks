@@ -51,7 +51,7 @@ export function createPeekButtonWindow(
   }
 
   win.once('ready-to-show', () => {
-    applyRoundedShape(win, 10)
+    applyRoundedShape(win, 15)
     win.show()
   })
 

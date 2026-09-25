@@ -104,6 +104,13 @@ export function getClockWindow(id: ClockId): BrowserWindow | undefined {
   return clockWindows.get(id)
 }
 
+/** Exposed so callers that programmatically move/resize a clock window
+ *  (menu expand, peek) can avoid the move/resize listeners persisting that
+ *  temporary position as if the user had dragged the window there. */
+export function suppressClockSave(id: ClockId): void {
+  suppressSaveBriefly(id)
+}
+
 export function setClockMenuExpanded(id: ClockId, expanded: boolean): void {
   const win = clockWindows.get(id)
   if (!win || win.isDestroyed()) return

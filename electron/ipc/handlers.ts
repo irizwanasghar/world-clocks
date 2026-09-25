@@ -10,7 +10,9 @@ import {
   DEFAULT_WIDTH,
   STATES_BUTTON_HEIGHT,
   MASTER_COLLAPSED_HEIGHT,
-  POPULATION_BUTTON_HEIGHT
+  POPULATION_BUTTON_HEIGHT,
+  PEEK_BUTTON_WIDTH,
+  PEEK_BUTTON_GAP
 } from '../services/settings'
 import { applyRoundedShape } from '../services/windowShape'
 import { CLOCK_DEFINITIONS } from '../../src/data/timezones'
@@ -18,7 +20,8 @@ import {
   createClockWindow,
   getClockWindow,
   getAllClockWindows,
-  setClockMenuExpanded
+  setClockMenuExpanded,
+  suppressClockSave
 } from '../windows/createClockWindow'
 import { getSettingsWindow } from '../windows/createSettingsWindow'
 import { createStatesWindow } from '../windows/createStatesWindow'
@@ -56,22 +59,27 @@ function closeOpenMenu(): void {
   openMenuOwner = null
 }
 
-/** Moves every widget window (5 clock cards + 3 buttons) to either its
- *  normal position or its peeked-away position, all at once. Only x moves;
- *  y and size are untouched. Used by the toggle handler and again at
- *  startup if the app launched with peeked already true from last session.
- *  Button windows don't persist their own x — it's always recomputed fresh
- *  from the current scale/dockSide via getScaledLayout, same as everywhere
- *  else those windows are positioned. */
+/** Moves every widget window (5 clock cards + 3 buttons + the peek arrow
+ *  itself) to either its normal position or its peeked-away position, all
+ *  at once. Only x moves; y and size are untouched. Used by the toggle
+ *  handler and again at startup if the app launched with peeked already
+ *  true from last session. Button windows don't persist their own x — it's
+ *  always recomputed fresh from the current scale/dockSide via
+ *  getScaledLayout, same as everywhere else those windows are positioned. */
 export function applyPeekState(peeked: boolean): void {
   const global = settingsStore.getAll().global
   const side = global.dockSide
   const layout = getScaledLayout(global.cardScale, side)
+  const workArea = screen.getPrimaryDisplay().workArea
 
   getAllClockWindows().forEach((win, id) => {
     if (win.isDestroyed()) return
     const state = settingsStore.getClock(id)
-    const workArea = screen.getDisplayMatching(win.getBounds()).workArea
+    // Prevent the move listener (which persists user drags) from saving
+    // this programmatic move as the card's new "normal" position — without
+    // this, un-peeking would restore to the peeked position itself, since
+    // that's what got persisted the moment it was peeked.
+    suppressClockSave(id)
     const x = peeked ? peekedX(state.width, side, workArea) : state.x
     win.setPosition(x, state.y)
   })
@@ -83,10 +91,20 @@ export function applyPeekState(peeked: boolean): void {
   ]
   buttons.forEach(([win, y]) => {
     if (!win || win.isDestroyed()) return
-    const workArea = screen.getDisplayMatching(win.getBounds()).workArea
     const x = peeked ? peekedX(layout.cardWidth, side, workArea) : layout.x
     win.setPosition(x, y)
   })
+
+  // The arrow itself also follows the stack, staying just outside whichever
+  // position (normal or peeked) the stack currently occupies, so it's never
+  // left stranded far from the visible content.
+  const peekBtnWin = getPeekButtonWindow()
+  if (peekBtnWin && !peekBtnWin.isDestroyed()) {
+    const stackX = peeked ? peekedX(layout.cardWidth, side, workArea) : layout.x
+    const peekBtnX =
+      side === 'right' ? stackX - PEEK_BUTTON_WIDTH - PEEK_BUTTON_GAP : stackX + layout.cardWidth + PEEK_BUTTON_GAP
+    peekBtnWin.setPosition(peekBtnX, layout.peekButtonY)
+  }
 }
 
 function applyAlwaysOnTopToAll(alwaysOnTop: boolean): void {

@@ -31,11 +31,11 @@ export const MAX_CARD_SCALE = 1.6
 
 export const DEFAULT_WIDTH = 236
 const DEFAULT_HEIGHT = 104
-const MARGIN = 20
+const MARGIN = 16
 const RIGHT_MARGIN = 22
-export const PEEK_BUTTON_WIDTH = 22
-export const PEEK_BUTTON_HEIGHT = 64
-const PEEK_BUTTON_GAP = 6
+export const PEEK_BUTTON_WIDTH = 30
+export const PEEK_BUTTON_HEIGHT = 30
+export const PEEK_BUTTON_GAP = 6
 /** How much of a peeked widget's width stays visible on-screen. */
 export const PEEK_VISIBLE_PX = 28
 export const STATES_BUTTON_HEIGHT = 54

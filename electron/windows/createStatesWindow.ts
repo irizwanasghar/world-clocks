@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { join } from 'path'
+import { popupPosition, settingsStore } from '../services/settings'
 
 let statesWindow: BrowserWindow | null = null
 
@@ -14,9 +15,15 @@ export function createStatesWindow(): BrowserWindow {
     return statesWindow
   }
 
+  const width = 380
+  const height = 620
+  const { x, y } = popupPosition(width, height, settingsStore.getAll().global.dockSide)
+
   const win = new BrowserWindow({
-    width: 380,
-    height: 620,
+    x,
+    y,
+    width,
+    height,
     minWidth: 320,
     minHeight: 420,
     title: 'All US States',

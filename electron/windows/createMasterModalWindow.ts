@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { join } from 'path'
+import { popupPosition, settingsStore } from '../services/settings'
 
 let masterModalWindow: BrowserWindow | null = null
 
@@ -14,9 +15,15 @@ export function createMasterModalWindow(): BrowserWindow {
     return masterModalWindow
   }
 
+  const width = 340
+  const height = 640
+  const { x, y } = popupPosition(width, height, settingsStore.getAll().global.dockSide)
+
   const win = new BrowserWindow({
-    width: 340,
-    height: 640,
+    x,
+    y,
+    width,
+    height,
     minWidth: 300,
     minHeight: 500,
     title: 'All Clocks Settings',

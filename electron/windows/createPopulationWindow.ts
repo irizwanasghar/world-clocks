@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { join } from 'path'
+import { popupPosition, settingsStore } from '../services/settings'
 
 let populationWindow: BrowserWindow | null = null
 
@@ -14,9 +15,15 @@ export function createPopulationWindow(): BrowserWindow {
     return populationWindow
   }
 
+  const width = 340
+  const height = 540
+  const { x, y } = popupPosition(width, height, settingsStore.getAll().global.dockSide)
+
   const win = new BrowserWindow({
-    width: 340,
-    height: 540,
+    x,
+    y,
+    width,
+    height,
     minWidth: 300,
     minHeight: 420,
     title: 'City Population',

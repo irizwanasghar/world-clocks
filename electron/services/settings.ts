@@ -197,6 +197,20 @@ export function peekedX(width: number, side: DockSide, workArea: Electron.Rectan
     : workArea.x - (width - PEEK_VISIBLE_PX)
 }
 
+/** Popup windows (All Clocks Settings, All US States, City Population) had
+ *  no explicit position and relied on the OS's default centering, which can
+ *  land the popup directly on top of the widget stack — e.g. the taller
+ *  "All Clocks Settings" modal overlapping the Central Time card and hiding
+ *  it behind the modal. Anchoring popups near the screen edge opposite the
+ *  dock side keeps them clear of the stack regardless of stack height or
+ *  popup size. */
+export function popupPosition(width: number, height: number, side: DockSide): { x: number; y: number } {
+  const workArea = screen.getPrimaryDisplay().workArea
+  const x = side === 'right' ? workArea.x + 40 : workArea.x + workArea.width - width - 40
+  const y = Math.round(workArea.y + (workArea.height - height) / 2)
+  return { x, y }
+}
+
 function defaultClockState(index: number): ClockState {
   const { x, y } = defaultPositionFor(index)
   return {

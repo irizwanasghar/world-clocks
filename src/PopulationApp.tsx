@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { AppSettings, PopulationResult } from './types'
 import { US_STATES } from './data/usStates'
 
-type Status = 'idle' | 'loading' | 'found' | 'not-found' | 'error'
+type Status = 'idle' | 'loading' | 'found' | 'not-found' | 'error' | 'missing-key'
 
 export function PopulationApp(): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null)
@@ -11,9 +11,14 @@ export function PopulationApp(): JSX.Element | null {
   const [status, setStatus] = useState<Status>('idle')
   const [result, setResult] = useState<PopulationResult | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [keyInput, setKeyInput] = useState('')
+  const [keySaved, setKeySaved] = useState(false)
 
   useEffect(() => {
-    window.desktopAPI.getSettings().then(setSettings)
+    window.desktopAPI.getSettings().then((s) => {
+      setSettings(s)
+      setKeyInput(s.global.censusApiKey)
+    })
     const unsubscribe = window.desktopAPI.onSettingsChanged(setSettings)
     return unsubscribe
   }, [])
@@ -37,8 +42,12 @@ export function PopulationApp(): JSX.Element | null {
     setErrorMessage('')
     const response = await window.desktopAPI.lookupPopulation(city.trim(), stateAbbr)
     if (!response.ok) {
-      setStatus('error')
-      setErrorMessage(response.error)
+      if (response.error === 'missing-api-key') {
+        setStatus('missing-key')
+      } else {
+        setStatus('error')
+        setErrorMessage(response.error)
+      }
       return
     }
     if (!response.result) {
@@ -49,12 +58,43 @@ export function PopulationApp(): JSX.Element | null {
     setStatus('found')
   }
 
+  const saveKey = async (): Promise<void> => {
+    const updated = await window.desktopAPI.saveGlobalSettings({ censusApiKey: keyInput.trim() })
+    setSettings(updated)
+    setKeySaved(true)
+    setTimeout(() => setKeySaved(false), 2000)
+  }
+
   if (!settings) return null
+
+  const hasKey = settings.global.censusApiKey.trim().length > 0
 
   return (
     <div className="settings-app">
       <div className="settings-panel">
         <h1 className="settings-title">City Population</h1>
+
+        {(!hasKey || status === 'missing-key') && (
+          <section className="settings-section">
+            <h2>Census API Key Required</h2>
+            <p className="modal-hint">
+              The Census Bureau requires a free API key for this lookup. Get one at{' '}
+              <strong>api.census.gov/data/key_signup.html</strong>, then paste it below.
+            </p>
+            <div className="population-form" style={{ marginTop: 8 }}>
+              <input
+                className="modal-search"
+                type="text"
+                placeholder="Paste your Census API key"
+                value={keyInput}
+                onChange={(e) => setKeyInput(e.target.value)}
+              />
+              <button className="btn" onClick={saveKey} disabled={!keyInput.trim()}>
+                {keySaved ? 'Saved ✓' : 'Save Key'}
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="settings-section">
           <div className="population-form">
@@ -92,6 +132,9 @@ export function PopulationApp(): JSX.Element | null {
             {status === 'loading' && <p className="modal-hint">Looking up population…</p>}
             {status === 'not-found' && (
               <p className="modal-hint">No match found for that city in {stateAbbr}. Check the spelling and try again.</p>
+            )}
+            {status === 'missing-key' && (
+              <p className="population-error">Add your Census API key above, then search again.</p>
             )}
             {status === 'error' && <p className="population-error">{errorMessage || 'Lookup failed. Check your internet connection.'}</p>}
             {status === 'found' && result && (

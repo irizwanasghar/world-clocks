@@ -11,21 +11,44 @@ function normalize(s: string): string {
   return s.trim().toLowerCase()
 }
 
+export class MissingApiKeyError extends Error {
+  constructor() {
+    super('missing-api-key')
+  }
+}
+
 /** Looks up a US city's latest population estimate from the Census Bureau's
  *  public API. Runs in the main process so the renderer's CSP never needs to
- *  allow an external network request. Returns null if no match is found. */
+ *  allow an external network request. Returns null if no match is found.
+ *  Throws MissingApiKeyError if the Bureau rejects the request for lacking
+ *  a key (place-level wildcard queries require one; the redirect target is
+ *  an HTML "missing key" page, not JSON — this is detected explicitly
+ *  rather than surfacing as a raw JSON-parse error). */
 export async function lookupCityPopulation(
   city: string,
-  stateAbbr: string
+  stateAbbr: string,
+  apiKey: string
 ): Promise<PopulationResult | null> {
   const fips = STATE_FIPS[stateAbbr.toUpperCase()]
   if (!fips) throw new Error(`Unknown state: ${stateAbbr}`)
 
-  const url =
+  let url =
     `https://api.census.gov/data/${ACS_YEAR}/acs/acs5` +
     `?get=NAME,B01003_001E&for=place:*&in=state:${fips}`
+  if (apiKey.trim()) {
+    url += `&key=${encodeURIComponent(apiKey.trim())}`
+  }
 
   const response = await fetch(url)
+
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json')) {
+    if (response.url.includes('missing_key') || !apiKey.trim()) {
+      throw new MissingApiKeyError()
+    }
+    throw new Error('Census Bureau returned an unexpected response (not JSON). Please try again.')
+  }
+
   if (!response.ok) {
     throw new Error(`Census API request failed (${response.status})`)
   }

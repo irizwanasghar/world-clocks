@@ -21,7 +21,8 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   theme: 'dark',
   launchAtStartup: false,
   cardScale: 1,
-  dockSide: 'right'
+  dockSide: 'right',
+  censusApiKey: ''
 }
 
 export const MIN_CARD_SCALE = 0.75
@@ -204,7 +205,12 @@ function loadRaw(): AppSettings {
     if (!isValidSettings(parsed)) {
       return mergeWithDefaults(parsed)
     }
-    return parsed
+    // A settings file can be structurally valid (isValidSettings only checks
+    // shape, not that every current GlobalSettings key is present) yet
+    // predate a newer field added to GlobalSettings since it was written —
+    // always backfill from defaults so a field like censusApiKey is never
+    // silently undefined at runtime.
+    return { ...parsed, global: { ...DEFAULT_GLOBAL, ...parsed.global } }
   } catch {
     return buildDefaultSettings()
   }

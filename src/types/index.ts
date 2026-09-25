@@ -54,6 +54,10 @@ export interface GlobalSettings {
   cardScale: number
   /** Which edge of the primary display the widget stack docks to. */
   dockSide: 'left' | 'right'
+  /** Free API key from api.census.gov/data/key_signup.html — the Census
+   *  Bureau's place-level population queries require one. Empty until the
+   *  user adds their own. */
+  censusApiKey: string
 }
 
 export interface EffectiveClockSettings {

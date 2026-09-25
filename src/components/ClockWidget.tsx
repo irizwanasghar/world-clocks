@@ -37,7 +37,7 @@ export function ClockWidget({ definition, global, onUpdateGlobal, onHide }: Cloc
         </button>
 
         <div className="clock-header">
-          {definition.flagEmoji} {definition.label}
+          <span className="flag">{definition.flagEmoji}</span> {definition.label}
         </div>
         <div className="clock-city">{definition.city}</div>
         <div className="clock-time">{time}</div>

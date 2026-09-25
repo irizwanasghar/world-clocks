@@ -15,20 +15,19 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   launchAtStartup: false
 }
 
-const DEFAULT_WIDTH = 260
-const DEFAULT_HEIGHT = 140
-const MARGIN = 20
+const DEFAULT_WIDTH = 280
+const DEFAULT_HEIGHT = 130
+const MARGIN = 16
 
+/** Stacks widgets vertically along the right edge of the primary display's work area. */
 function defaultPositionFor(index: number): { x: number; y: number } {
   const display = screen.getPrimaryDisplay()
-  const { x: wx, y: wy, width } = display.workArea
-  const perRow = Math.max(1, Math.floor(width / (DEFAULT_WIDTH + MARGIN)))
-  const col = index % perRow
-  const row = Math.floor(index / perRow)
-  return {
-    x: wx + MARGIN + col * (DEFAULT_WIDTH + MARGIN),
-    y: wy + MARGIN + row * (DEFAULT_HEIGHT + MARGIN)
-  }
+  const { x: wx, y: wy, width, height } = display.workArea
+  const x = wx + width - DEFAULT_WIDTH - MARGIN
+  const totalHeight = CLOCK_DEFINITIONS.length * DEFAULT_HEIGHT + (CLOCK_DEFINITIONS.length - 1) * MARGIN
+  const startY = wy + Math.max(MARGIN, (height - totalHeight) / 2)
+  const y = startY + index * (DEFAULT_HEIGHT + MARGIN)
+  return { x, y }
 }
 
 function defaultClockState(index: number): ClockState {

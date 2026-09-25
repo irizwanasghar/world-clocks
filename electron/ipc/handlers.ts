@@ -120,48 +120,29 @@ export function applyPeekState(peeked: boolean): void {
     const stackX = peeked ? peekedX(layout.cardWidth, side, workArea) : layout.x
     const peekBtnX =
       side === 'right' ? stackX - PEEK_BUTTON_WIDTH - PEEK_BUTTON_GAP : stackX + layout.cardWidth + PEEK_BUTTON_GAP
-    movePeekButton(peekBtnWin, peekBtnX, actualStackCenterY(layout.peekButtonY))
+    movePeekButton(peekBtnWin, peekBtnX, layout.peekButtonY)
   }
 }
 
-/** The arrow's default-layout Y (from getScaledLayout) assumes every widget
- *  still sits at its theoretical default row position. Once a card has been
- *  dragged by the user, that assumption breaks and the arrow ends up
- *  misaligned with the real stack — overlapping cards instead of sitting
- *  beside them. Computing the vertical center from each window's *actual*
- *  current bounds keeps the arrow honest regardless of where things really
- *  are. Falls back to the given default when no windows are visible yet. */
-function actualStackCenterY(fallback: number): number {
-  const labeled: Array<[string, ReturnType<typeof getStatesButtonWindow>]> = [
-    ...Array.from(getAllClockWindows().entries()).map(
-      ([id, w]) => [`clock:${id}`, w] as [string, BrowserWindow]
-    ),
-    ['statesButton', getStatesButtonWindow()],
-    ['masterSettings', getMasterSettingsWindow()],
-    ['populationButton', getPopulationButtonWindow()]
-  ]
-  const wins = labeled.filter(
-    (pair): pair is [string, BrowserWindow] => !!pair[1] && !pair[1].isDestroyed() && pair[1].isVisible()
-  )
-
-  logDebug(`  actualStackCenterY: ${wins.length} visible windows counted (fallback=${fallback})`)
-  wins.forEach(([label, w]) => {
-    const b = w.getBounds()
-    logDebug(`    ${label}: y=${b.y} height=${b.height} bottom=${b.y + b.height}`)
-  })
-  if (wins.length === 0) return fallback
-
-  const tops = wins.map(([, w]) => w.getBounds().y)
-  const bottoms = wins.map(([, w]) => {
-    const b = w.getBounds()
-    return b.y + b.height
-  })
-  const top = Math.min(...tops)
-  const bottom = Math.max(...bottoms)
-  const result = Math.round((top + bottom) / 2 - PEEK_BUTTON_HEIGHT / 2)
-  logDebug(`  actualStackCenterY: top=${top} bottom=${bottom} -> y=${result}`)
-  return result
-}
+/** The arrow's Y used to be computed live from every widget's *actual*
+ *  current window bounds (actualStackCenterY), specifically to stay
+ *  correct even if the user had manually dragged a card away from its
+ *  default row position. That measurement turned out to be the real
+ *  problem: debug logging proved several of these windows' reported
+ *  getBounds() height grows a little further with every single repeated
+ *  read, regardless of whether anything ever actually resizes them —
+ *  apparently an inherent Windows/Electron quirk for these particular
+ *  thin windows, present even with the most minimal possible
+ *  setPosition-only handling. Depending on live measurement at all meant
+ *  every peek toggle both read and compounded that drift.
+ *
+ *  Falling back to the deterministic layout.peekButtonY (computed purely
+ *  from screen size/scale/side, the same value used at first launch)
+ *  trades away that one edge case — the arrow can be slightly misaligned
+ *  if the user has manually dragged cards off their default positions —
+ *  for a value that can never drift, no matter how many times the arrow
+ *  is clicked. That's a far better trade than an open-ended, worsening
+ *  visual bug. */
 
 /** Repositions a small layered (transparent, no-shadow) widget window and
  *  forces a repaint afterward. On Windows, moving such a window purely via
@@ -346,7 +327,7 @@ export function registerIpcHandlers(): void {
     const peekBtnWin = getPeekButtonWindow()
     if (peekBtnWin && !peekBtnWin.isDestroyed()) {
       const layout = getScaledLayout(1, settings.global.dockSide)
-      movePeekButton(peekBtnWin, layout.peekButtonX, actualStackCenterY(layout.peekButtonY))
+      movePeekButton(peekBtnWin, layout.peekButtonX, layout.peekButtonY)
     }
     broadcastSettings()
     return settings
@@ -483,7 +464,7 @@ export function registerIpcHandlers(): void {
 
     const peekBtnWin = getPeekButtonWindow()
     if (peekBtnWin && !peekBtnWin.isDestroyed()) {
-      movePeekButton(peekBtnWin, layout.peekButtonX, actualStackCenterY(layout.peekButtonY))
+      movePeekButton(peekBtnWin, layout.peekButtonX, layout.peekButtonY)
     }
 
     broadcastSettings()
@@ -520,7 +501,7 @@ export function registerIpcHandlers(): void {
 
     const peekBtnWin = getPeekButtonWindow()
     if (peekBtnWin && !peekBtnWin.isDestroyed()) {
-      movePeekButton(peekBtnWin, layout.peekButtonX, actualStackCenterY(layout.peekButtonY))
+      movePeekButton(peekBtnWin, layout.peekButtonX, layout.peekButtonY)
     }
 
     broadcastSettings()

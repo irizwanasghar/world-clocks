@@ -9,7 +9,17 @@ import { checkForUpdates } from '../services/updater'
 let tray: Tray | null = null
 
 function buildIcon() {
-  const iconPath = join(__dirname, '../../resources/icon.png')
+  // A packaged app only ships what's listed under "files" in package.json's
+  // build config (out/**/*) plus anything under "extraResources" — the
+  // top-level resources/ folder isn't part of either by default, so it must
+  // be copied in via extraResources and read back from process.resourcesPath
+  // at runtime. Resolving it relative to __dirname (as if resources/ sat
+  // next to the source tree) only works in dev, where __dirname really is
+  // inside the project; in production it silently resolves to nothing and
+  // the tray icon renders blank.
+  const iconPath = app.isPackaged
+    ? join(process.resourcesPath, 'resources', 'icon.png')
+    : join(__dirname, '../../resources/icon.png')
   const img = nativeImage.createFromPath(iconPath)
   if (!img.isEmpty()) return img
   // 16x16 transparent fallback so Tray never throws if the asset is missing

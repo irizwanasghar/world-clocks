@@ -97,3 +97,63 @@ export async function listCitiesInState(stateAbbr: string, apiKey: string): Prom
     }))
     .sort((a, b) => b.population - a.population)
 }
+
+// Every US place (~29,000 rows) fetched once per app session and reused —
+// the Bureau's ACS 5-Year figures don't change intra-session, and refetching
+// on every keystroke of a nationwide city search would be both slow and
+// wasteful.
+let nationwidePlacesCache: string[][] | null = null
+
+async function fetchAllPlacesNationwide(apiKey: string): Promise<string[][]> {
+  if (nationwidePlacesCache) return nationwidePlacesCache
+
+  let url =
+    `https://api.census.gov/data/${ACS_YEAR}/acs/acs5` +
+    `?get=NAME,B01003_001E&for=place:*&in=state:*`
+  if (apiKey.trim()) {
+    url += `&key=${encodeURIComponent(apiKey.trim())}`
+  }
+
+  const response = await fetch(url)
+
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json')) {
+    if (response.url.includes('missing_key') || !apiKey.trim()) {
+      throw new MissingApiKeyError()
+    }
+    throw new Error('Census Bureau returned an unexpected response (not JSON). Please try again.')
+  }
+
+  if (!response.ok) {
+    throw new Error(`Census API request failed (${response.status})`)
+  }
+
+  const rows = (await response.json()) as string[][]
+  const data = rows.slice(1)
+  nationwidePlacesCache = data
+  return data
+}
+
+/** Searches every US city/town by name (not limited to one state), sorted
+ *  by population descending and capped to `limit` results — used to let a
+ *  "See all states" search also surface direct city matches instead of
+ *  requiring the user to pick a state first. */
+export async function searchCitiesNationwide(
+  query: string,
+  apiKey: string,
+  limit = 25
+): Promise<PopulationResult[]> {
+  const dataRows = await fetchAllPlacesNationwide(apiKey)
+  const q = normalize(query)
+  if (!q) return []
+
+  return dataRows
+    .filter((row) => normalize(row[0]).includes(q))
+    .map((row) => ({
+      name: row[0],
+      population: parseInt(row[1], 10) || 0,
+      year: ACS_YEAR
+    }))
+    .sort((a, b) => b.population - a.population)
+    .slice(0, limit)
+}

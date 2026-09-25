@@ -33,7 +33,7 @@ import { createMasterModalWindow } from '../windows/createMasterModalWindow'
 import { getPopulationButtonWindow } from '../windows/createPopulationButtonWindow'
 import { createPopulationWindow } from '../windows/createPopulationWindow'
 import { getPeekButtonWindow } from '../windows/createPeekButtonWindow'
-import { lookupCityPopulation, listCitiesInState, MissingApiKeyError } from '../services/census'
+import { lookupCityPopulation, listCitiesInState, searchCitiesNationwide, MissingApiKeyError } from '../services/census'
 import { refreshTrayMenu } from '../tray/tray'
 
 /** Pushes the latest settings to every window that reads them, not just the
@@ -351,6 +351,19 @@ export function registerIpcHandlers(): void {
         return { ok: false as const, error: 'missing-api-key' }
       }
       return { ok: false as const, error: err instanceof Error ? err.message : 'Lookup failed' }
+    }
+  })
+
+  ipcMain.handle('search-cities-nationwide', async (_e, query: string) => {
+    try {
+      const apiKey = settingsStore.getAll().global.censusApiKey.trim() || SHARED_CENSUS_API_KEY
+      const results = await searchCitiesNationwide(query, apiKey)
+      return { ok: true as const, results }
+    } catch (err) {
+      if (err instanceof MissingApiKeyError) {
+        return { ok: false as const, error: 'missing-api-key' }
+      }
+      return { ok: false as const, error: err instanceof Error ? err.message : 'Search failed' }
     }
   })
 

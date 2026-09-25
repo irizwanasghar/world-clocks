@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, Menu } from 'electron'
 import { CLOCK_DEFINITIONS } from '../src/data/timezones'
 import { settingsStore, initSettingsStore } from './services/settings'
 import { createClockWindow } from './windows/createClockWindow'
@@ -9,7 +9,7 @@ import { createPopulationButtonWindow } from './windows/createPopulationButtonWi
 import { createPeekButtonWindow } from './windows/createPeekButtonWindow'
 import { createTray } from './tray/tray'
 import { registerIpcHandlers, applyPeekState } from './ipc/handlers'
-import { initAutoUpdater } from './services/updater'
+import { initAutoUpdater, checkForUpdates } from './services/updater'
 
 // Per-pixel alpha on transparent, frameless windows can render as opaque
 // black/gray outside the rounded card instead of true transparency when GPU
@@ -33,6 +33,23 @@ if (!gotLock) {
   })
 
   app.whenReady().then(() => {
+    // Applies to every frame:true window (All Clocks Settings, All US
+    // States, City Population) — the widget cards and buttons are all
+    // frame:false and never show a menu bar regardless.
+    Menu.setApplicationMenu(
+      Menu.buildFromTemplate([
+        {
+          label: 'View',
+          submenu: [
+            { label: 'Check for Updates', click: () => checkForUpdates() },
+            { type: 'separator' },
+            { role: 'reload' },
+            { role: 'toggleDevTools' }
+          ]
+        }
+      ])
+    )
+
     initSettingsStore()
     registerIpcHandlers()
     createTray()

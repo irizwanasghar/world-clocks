@@ -38,6 +38,12 @@
     "files": [
       "out/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": "resources"
+      }
+    ],
     "publish": {
       "provider": "github",
       "owner": "irizwanasghar",

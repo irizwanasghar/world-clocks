@@ -30,6 +30,7 @@ const api: DesktopAPI = {
   lookupPopulation: (city: string, stateAbbr: string) =>
     ipcRenderer.invoke('lookup-population', city, stateAbbr),
   listStateCities: (stateAbbr: string) => ipcRenderer.invoke('list-state-cities', stateAbbr),
+  searchCitiesNationwide: (query: string) => ipcRenderer.invoke('search-cities-nationwide', query),
   onSettingsChanged: (callback: (settings: AppSettings) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
       callback(settings)

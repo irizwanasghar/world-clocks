@@ -118,6 +118,9 @@ export interface DesktopAPI {
   listStateCities: (
     stateAbbr: string
   ) => Promise<{ ok: true; results: PopulationResult[] } | { ok: false; error: string }>
+  searchCitiesNationwide: (
+    query: string
+  ) => Promise<{ ok: true; results: PopulationResult[] } | { ok: false; error: string }>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
   onClockMenuClosed: (callback: () => void) => () => void
 }
